@@ -1,11 +1,11 @@
 
-# APEP System Simulation
+# Apep System Simulation
 
 ## Minimum Requirements
 
-- **Morphological Reproduction**: The primary objective is to simulate the APEP system's morphology accurately. The code must be capable of reproducing the observed shape (serpent) and maybe the structure of the system as viewed from various angles.
+- **Morphological Reproduction**: The primary objective is to accurately simulate the morphology of the Apep system. The code must be capable of reproducing the observed shape (serpent) and maybe the structure of the system as viewed from various angles. The code will use gravity, stellar evolution, hydrodynamics and radiative transfer codes from the AMUSE framework.
   
-- **Evolutionary Animation**: The code should generate a time-lapse animation detailing the visual representation of system's evolution from its inception to its current state. 
+- **Evolutionary Animation**: The code should generate a time-lapse animation detailing the visual representation of the system's evolution from its inception to its current state. 
 
 ## Additional Objectives
 
@@ -13,4 +13,4 @@
   
 - **Morphological Impact Analysis**: Post-supernova, the resultant changes in the system’s morphology.
 
-- **X-Ray Flux**: Post processing element derived from the evolving sytsem.
+- **X-Ray Flux**: Post-processing element derived from the evolving system.
