@@ -16,7 +16,7 @@ set_printing_strategy("custom", #nbody_converter = converter,
                       precision = 5, prefix = "", separator = " [", suffix = "]"
 )
 
-def new_sph_particles_from_stellar_wind(stars, mgas):
+def new_sph_particles_from_stellar_wind(stars, mgas): #was in the example codes and also in the textbook
     new_sph=datamodel.Particles(0)
     for si in stars:
         Ngas = int(si.Mwind/mgas)
@@ -62,7 +62,7 @@ def main():
     stellar.evolve_model(1|units.Myr)
     stellar_to_framework.copy_attributes(["mass","radius","temperature"])
     dt = 0.1|units.Myr
-    stellar.evolve_model((1|units.Myr)+dt) #evolving for a very short time just to see if it works
+    stellar.evolve_model((1|units.Myr)+dt) #evolving for a very short time just to see if it works (will evolve both the WR stars and supergiant separately in future)
     stars[0].dmdt = 10**(-4.3) | units.MSun / units.yr #mass loss rate took from the ppt we made
     stars[1].dmdt = 10**(-4.5) | units.MSun / units.yr #mass loss rate took from the ppt we made
     #stars.dmdt = (stellar.particles.mass-stars.mass)/dt
