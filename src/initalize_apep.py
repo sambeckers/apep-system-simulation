@@ -52,6 +52,11 @@ T_wind_WC = 0.3 * T_eff_WC
 
 
 def Initialize_inner_binary():
+    """
+    Create a Particleset of the inner binary system.
+    The carbon Wolf-Rayet star is the primary,
+    the nitrogen Wolf-Rayet star is the secondary.
+    """
     inner_binary = new_binary_from_orbital_elements(
         mass1=M_WC,
         mass2=M_WN,
@@ -65,6 +70,12 @@ def Initialize_inner_binary():
 
 
 def Initialize_apep():
+    """
+    Create a Particleset of the entire apep system.
+    The carbon Wolf-Rayet star is the primary,
+    the nitrogen Wolf-Rayet star is the secondary.
+    The O8-Iaf supergiant is the tertiary.
+    """
     inner_binary = new_binary_from_orbital_elements(
         mass1=M_WC,
         mass2=M_WN,

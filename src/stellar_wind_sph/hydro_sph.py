@@ -9,11 +9,13 @@ Created on 02-12-23
 import numpy
 from amuse.lab import *
 from amuse import datamodel
-from amuse.units import units
-from amuse.lab import Particles
+from amuse.io import write_set_to_file, set_printing_strategy
+from amuse.units import units, nbody_system
+from amuse.lab import Particles, ParticlesSuperset
 from amuse.units.constants import G
 from amuse.ext.evrard_test import uniform_unit_sphere
 from amuse.community.seba.interface import SeBa
+from amuse.community.fi.interface import Fi
 
 # Own modules
 from initialize_apep import Initialize_inner_binary
