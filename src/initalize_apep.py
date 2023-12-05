@@ -51,10 +51,23 @@ T_wind_WN = 0.3 * T_eff_WN
 T_wind_WC = 0.3 * T_eff_WC
 
 
+def Initialize_inner_binary():
+    inner_binary = new_binary_from_orbital_elements(
+        mass1=M_WC,
+        mass2=M_WN,
+        semimajor_axis=a_binary,
+        eccentricity=ecc_binary,
+        inclination=inc_binary,
+    )
+    inner_binary.move_to_center()
+    setattr(inner_binary, "name", ["WC8", "WN46b"])
+    return inner_binary
+
+
 def Initialize_apep():
     inner_binary = new_binary_from_orbital_elements(
-        mass1=M_WN,
-        mass2=M_WC,
+        mass1=M_WC,
+        mass2=M_WN,
         semimajor_axis=a_binary,
         eccentricity=ecc_binary,
         inclination=inc_binary,
@@ -67,5 +80,5 @@ def Initialize_apep():
     inner_binary.add_particle(companion_binary[1])
     inner_binary.move_to_center()
     ternary_system = inner_binary
-    setattr(ternary_system, "name", ["WN46b", "WC8", "O8"])
+    setattr(ternary_system, "name", ["WC8", "WN46b", "O8"])
     return ternary_system
