@@ -14,3 +14,8 @@
 - **Morphological Impact Analysis**: Post-supernova, the resultant changes in the system’s morphology.
 
 - **X-Ray Flux**: Post-processing element derived from the evolving system.
+
+## Make the movie
+*Command Line Code that put the plots together.*
+*This might need ffmpeg installation*
+ffmpeg -r 2 -f image2 -s 1920x1080 -i hydro_outflow_step_%d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p output_movie.mp4
