@@ -97,8 +97,9 @@ def plot_sph_particles_3D(filename, u_range = None, min_size = 100, max_size = 1
     ax.set_ylabel('y')
     ax.set_zlabel('z')
     plt.tight_layout()
-    plt.show()
+    #plt.show()
     plt.savefig(filename.replace('.hdf5', '.png'))
+    plt.close()
     # if gd_particles:
     #     scatter(gd_particles.x, gd_particles.y, c='w', marker='o')
 
