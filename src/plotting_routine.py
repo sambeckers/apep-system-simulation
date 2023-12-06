@@ -11,7 +11,7 @@ from mpl_toolkits import mplot3d
 import glob
 from amuse.plot import _plot
 from amuse.io import read_set_from_file
-import amuse.units as units
+from amuse.units import units
 import numpy as np
 
 def plot_sph_particles_2D(filename):
@@ -19,7 +19,6 @@ def plot_sph_particles_2D(filename):
     particles = read_set_from_file(filename, "hdf5", copy_history = False, close_file = False) #reading the saved hdf5 files
     _plot.sph_particles_plot(particles) #plotting routine to plot the SPH particles
     plt.savefig(filename.replace('.hdf5', '.png'))
-    plt.close()
 
 def smart_length_units_for_vector_quantity(quantity):
     length_units = [units.Mpc, units.kpc, units.parsec, units.AU, units.RSun, units.km]
@@ -29,7 +28,7 @@ def smart_length_units_for_vector_quantity(quantity):
             return length_unit
     return units.m
 
-def plot_sph_particles_3D(particles, u_range = None, min_size = 100, max_size = 10000,
+def plot_sph_particles_3D(filename, u_range = None, min_size = 100, max_size = 10000,
         alpha = 0.1, gd_particles=None, width=None, view=None):
     """
     Very simple and fast procedure to make a plot of the hydrodynamics state of
@@ -44,6 +43,7 @@ def plot_sph_particles_3D(particles, u_range = None, min_size = 100, max_size = 
     :argument gd_particles: non-SPH particles can be indicated with white circles
     :argument view: the (physical) region to plot [xmin, xmax, ymin, ymax]
     """
+    particles = read_set_from_file(filename, "hdf5", copy_history = False, close_file = False)
     positions = particles.position
     us        = particles.u
     h_smooths = particles.h_smooth
@@ -89,16 +89,16 @@ def plot_sph_particles_3D(particles, u_range = None, min_size = 100, max_size = 
     x = x.as_quantity_in(length_unit)
     y = y.as_quantity_in(length_unit)
     z = z.as_quantity_in(length_unit)
+
     fig = plt.figure(dpi=100)
     ax = plt.axes(projection='3d')
-    ax.scatter3D(x, y,z, s=sizes, c=colors, edgecolors="none", alpha=alpha)
+    ax.scatter3D(x.value_in(units.AU), y.value_in(units.AU), z.value_in(units.AU), s=sizes, c=colors, edgecolors="none", alpha=alpha)
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
     plt.tight_layout()
     plt.show()
     plt.savefig(filename.replace('.hdf5', '.png'))
-    plt.close()
     # if gd_particles:
     #     scatter(gd_particles.x, gd_particles.y, c='w', marker='o')
 
@@ -110,3 +110,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
