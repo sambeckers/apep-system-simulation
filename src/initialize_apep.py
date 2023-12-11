@@ -30,12 +30,8 @@ R_WC = 6.3 | units.RSun
 T_eff_WN = 65000 | units.K
 T_eff_WC = 60000 | units.K
 
-M_loss_WN = (
-    4 * 10 ** (-5) | units.MSun / units.yr
-)  # mass loss rate of the WN46b-tyoe WR
-M_loss_WC = (
-    2.9 * 10 ** (-5) | units.MSun / units.yr
-)  # mass loss rate of the WC8-type WR
+M_loss_WN = ( 4 * 10 ** (-5) | units.MSun / units.yr)  # mass loss rate of the WN46b-tyoe WR
+M_loss_WC = (2.9 * 10 ** (-5) | units.MSun / units.yr)  # mass loss rate of the WC8-type WR
 
 # O8-Iaf Supergiant (SG)
 d_WR_binary_to_SG = 1700 | units.au
@@ -44,6 +40,8 @@ M_SG = 40 | units.MSun
 R_SG = 35.4 | units.RSun
 T_eff_SG = 30000 | units.K
 M_loss_SG = 10 ** (-5) | units.MSun / units.yr
+ecc_SG = 0.5 # guess
+inc_SG = 75 | units.deg # guess
 
 # Stellar winds
 v_inf_wind_WN = 3500 | units.kms
@@ -63,31 +61,34 @@ def Initialize_inner_binary():
         mass2=M_WN,
         semimajor_axis=a_binary,
         eccentricity=ecc_binary,
-        inclination=inc_binary,
-    )
+        inclination=inc_binary)
+    
     inner_binary.move_to_center()
     setattr(inner_binary, "name", ["WC8", "WN46b"])
+
+    inner_binary["WC8"].radius = R_WC
+    inner_binary["WN46b"].radius = R_WN
+
+    inner_binary["WC8"].temperature = T_eff_WC
+    inner_binary["WN46b"].temperature = T_eff_WN
+
+    inner_binary["WC8"].terminal_wind_velocity = v_inf_wind_WC
+    inner_binary["WN46b"].terminal_wind_velocity = v_inf_wind_WN
+
+    inner_binary["WC8"].wind_temperature = T_wind_WC
+    inner_binary["WN46b"].wind_temperature = T_wind_WN
+
+    inner_binary["WC8"].dmdt = M_loss_WC
+    inner_binary["WN46b"].dmdt = M_loss_WN
 
     stellar = SeBa()
     stellar.particles.add_particles(inner_binary)
     stellar_to_framework = stellar.particles.new_channel_to(inner_binary)
+
     stellar.evolve_model(1 | units.Myr)
-    stellar_to_framework.copy_attributes(["mass", "radius", "temperature"])
+    stellar_to_framework.copy_attributes(["mass", "radius", "temperature", "dmdt", "terminal_wind_velocity", "wind_temperature"])
     dt = 0.1 | units.Myr
-    stellar.evolve_model(
-        (1 | units.Myr) + dt
-    )  # evolving for a very short time just to see if it works (will evolve both the WR stars and supergiant separately in future)
-    inner_binary[0].dmdt = M_loss_WC  # mass loss rate took from the ppt we made
-    inner_binary[1].dmdt = M_loss_WN  # mass loss rate took from the ppt we made
-    # stars.dmdt = (stellar.particles.mass-stars.mass)/dt
-    inner_binary.Mwind = 0 | units.MSun
-    inner_binary[
-        0
-    ].terminal_wind_velocity = v_inf_wind_WC  # wind_velocity took from the ppt
-    inner_binary[
-        1
-    ].terminal_wind_velocity = v_inf_wind_WN  # wind_velocity took from the ppt
-    stellar.stop()
+    stellar.evolve_model((1 | units.Myr) + dt)  # evolving for a very short time just to see if it works (will evolve both the WR stars and supergiant separately in future)
 
     return inner_binary
 
@@ -99,20 +100,23 @@ def Initialize_apep():
     the nitrogen Wolf-Rayet star is the secondary.
     The O8-Iaf supergiant is the tertiary.
     """
-    inner_binary = new_binary_from_orbital_elements(
-        mass1=M_WC,
-        mass2=M_WN,
-        semimajor_axis=a_binary,
-        eccentricity=ecc_binary,
-        inclination=inc_binary,
-    )
+    central_engine = Initialize_inner_binary()
 
     companion_binary = new_binary_from_orbital_elements(
-        mass1=M_WN + M_WC, mass2=M_SG, semimajor_axis=d_WR_binary_to_SG
+        mass1=M_WN + M_WC,
+        mass2=M_SG, 
+        semimajor_axis=d_WR_binary_to_SG, 
+        eccentricity=ecc_SG, 
+        inclination=inc_SG
     )
+    companion_binary[1].radius = R_SG
+    companion_binary[1].temperature = T_eff_SG
+    companion_binary[1].dmdt = M_loss_SG
+    
 
-    inner_binary.add_particle(companion_binary[1])
-    inner_binary.move_to_center()
-    ternary_system = inner_binary
+    central_engine.add_particle(companion_binary[1])
+    central_engine.move_to_center()
+    ternary_system = central_engine
     setattr(ternary_system, "name", ["WC8", "WN46b", "O8"])
+    
     return ternary_system
