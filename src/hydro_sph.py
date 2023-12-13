@@ -17,10 +17,12 @@ from amuse.ext.evrard_test import uniform_unit_sphere
 from amuse.community.seba.interface import SeBa
 from amuse.community.fi.interface import Fi
 import os
+from amuse.community.ph4.interface import ph4
 
 # Own modules
 from initialize_apep import Initialize_inner_binary
 from initialize_apep import M_loss_WN, M_loss_WC, v_inf_wind_WN, v_inf_wind_WC
+from plotting_routine import plot_sph_particles
 
 
 set_printing_strategy(
@@ -69,9 +71,9 @@ def main():
 
     a = inner_binary.position.length().amax()
 
-    dt = 0.1 | units.day
-    mgas = 0.1 * abs(
-        inner_binary.dmdt.sum() * dt
+    dt = 3 | units.day
+    mgas = 100 * abs(
+        inner_binary.dmdt.sum() * dt  # 0.01 |units.MEarth
     )  # mass of gas lost through stellar wind
 
     converter = nbody_system.nbody_to_si(1 | units.MSun, a)
@@ -94,7 +96,7 @@ def main():
     filename = "hydro_outflow.hdf5"
     istep = 0
     while (
-        hydro.model_time < 2 | units.day
+        hydro.model_time < 10 | units.yr
     ):  # evolving for 2 days just to see if this works
         inner_binary.Mwind += inner_binary.dmdt * dt
         new_sph = new_sph_particles_from_stellar_wind(inner_binary, mgas)
@@ -102,17 +104,27 @@ def main():
         if len(new_sph) > 0:
             bodies.add_particles(new_sph)
             bodies.synchronize_to(hydro.gas_particles)
-        print("time=", hydro.model_time, "Ngas=", len(bodies), mgas * len(bodies))
+        print(
+            "time=",
+            hydro.model_time.in_(units.yr),
+            "Ngas=",
+            len(bodies),
+            mgas * len(bodies),
+        )
         if len(bodies) > 100:
             hydro.evolve_model(hydro.model_time + dt)
             hydro_to_framework.copy()
-            if istep % 1 == 0:
-                filename = f"hydro_outflow_step_{istep}.hdf5"  # saving the system as new hdf5 file at each step
+            savestep = 5
+            if istep % savestep == 0:
+                filename = f"hydro_outflow_step_{int(istep/savestep)}.hdf5"  # saving the system as new hdf5 file at each step
                 if os.path.exists(filename):
                     os.remove(filename)
                 write_set_to_file(
                     hydro.gas_particles, filename, "hdf5", append_to_file=False
                 )
+                plot_sph_particles(filename)
+                if os.path.exists(filename):
+                    os.remove(filename)
 
             istep += 1
     hydro.stop()
