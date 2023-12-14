@@ -22,8 +22,8 @@ from amuse.couple import bridge
 from amuse.ext.composition_methods import *
 
 # Own modules
-from initialize_apep import Initialize_inner_binary
-from initialize_apep import M_loss_WN, M_loss_WC, v_inf_wind_WN, v_inf_wind_WC, P_binary
+from initialize_apep import Initialize_apep
+from initialize_apep import M_loss_WN, M_loss_WC, v_inf_wind_WN, v_inf_wind_WC, P_binary, d_WR_binary_to_SG
 from plotting_routine import plot_sph_particles
 
 
@@ -67,73 +67,85 @@ def new_sph_particles_from_stellar_wind(
 
 
 def main():
-    inner_binary = (
-        Initialize_inner_binary()
-    )  # Carbon star first. Moved to center of mass.
-
-    a = inner_binary.position.length().amax()
+    apep = Initialize_apep()
+    inner_binary = Particles([apep["WC8"], apep["WN46b"]])
 
     dt = 2 | units.day
-    mgas = 0.1 * abs(
-        inner_binary.dmdt.sum() * dt
-    )  # mass of gas lost through stellar wind
+    mgas = 0.1 * abs(apep.dmdt.sum() * dt)  # mass of gas lost through stellar wind
 
-    converter = nbody_system.nbody_to_si(1 | units.MSun, a)
-    bodies = Particles(0)
-    bodies.mass = mgas
-    bodies.position = (0, 0, 0) | units.AU
-    bodies.velocity = (0, 0, 0) | units.kms
-    bodies.u = 0 | units.m**2 * units.s**-2
-    bodies.h_smooth = 0.01 * a
-
+    # Setting up gravity
+    converter = nbody_system.nbody_to_si(apep.mass.sum(), d_WR_binary_to_SG)
     gravity = ph4(converter)
-    gravity.particles.add_particles(bodies)
-    channel = {"from SPH": bodies.new_channel_to(gravity.particles),
-                "to_SPH": gravity.particles.new_channel_to(bodies)}
+    gravity.particles.add_particles(apep)
+    channel = {"from apep:": apep.new_channel_to(gravity.particles),
+                "to_apep": gravity.particles.new_channel_to(apep)}
 
-    hydro = Fi(converter, redirection="none")
-    if len(bodies) > 0:
-        hydro.gas_particles.add_particles(bodies)
+    # Setting up the SPH particles
+    wind = Particles(0)
+    wind.mass = mgas
+    wind.position = (0, 0, 0) | units.AU
+    wind.velocity = (0, 0, 0) | units.kms
+    wind.u = 0 | units.m**2 * units.s**-2
+    wind.h_smooth = 0.01 * d_WR_binary_to_SG
+
+    # Setting up the hydrodynamics
+    hydro = Fi(converter, redirection="none", mode="openmp")
+    if len(wind) > 0:
+        hydro.gas_particles.add_particles(wind)
+        hydro.dm_particles.add_particles(inner_binary.as_set())
     hydro.parameters.use_hydro_flag = True
     hydro.parameters.timestep = dt
-    hydro.parameters.periodic_box_size = 1000 * a
-    hydro_to_framework = hydro.gas_particles.new_channel_to(bodies)
+    hydro.parameters.periodic_box_size = 1000 * d_WR_binary_to_SG
+    hydro_to_framework = hydro.gas_particles.new_channel_to(wind)
+    
+    channel.update({"from_wind": wind.new_channel_to(hydro.gas_particles)})
+    channel.update({"to_wind": hydro.gas_particles.new_channel_to(wind)})
+    channel.update({"from_stars": inner_binary.new_channel_to(hydro.dm_particles)})
+    channel.update({"to_stars": hydro.dm_particles.new_channel_to(inner_binary)})
 
+    # Setting up the bridge between gravity and hydrodynamics
     gravhydro = bridge.Bridge(use_threading=False) #, method=SPLIT_4TH_S_M4)
     gravhydro.add_system(gravity, (hydro,))
     gravhydro.add_system(hydro, (gravity,))
     gravhydro.timestep = 0.2*P_binary
 
-    # moving_bodies = ParticlesSuperset([inner_binary, bodies])
+    # moving_wind = ParticlesSuperset([apep, wind])
+
+    # Evolving the system
     filename = "hydro_outflow.hdf5"
     istep = 0
     while (
         hydro.model_time < 200 | units.day
     ):  # evolving for 2 days just to see if this works
-        inner_binary.Mwind += inner_binary.dmdt * dt
+        apep.Mwind += apep.dmdt * dt
         new_sph = new_sph_particles_from_stellar_wind(inner_binary, mgas)
 
         if len(new_sph) > 0:
-            bodies.add_particles(new_sph)
-            bodies.synchronize_to(hydro.gas_particles)
-        print("time=", hydro.model_time, "Ngas=", len(bodies), mgas * len(bodies))
-        if len(bodies) > 100:
-            hydro.evolve_model(hydro.model_time + dt)
+            wind.add_particles(new_sph)
+            wind.synchronize_to(hydro.gas_particles)
+        print("time=", hydro.model_time, "Ngas=", len(wind), mgas * len(wind))
+        if len(wind) > 100:
+            gravhydro.evolve_model(hydro.model_time + dt)
             hydro_to_framework.copy()
+            channel["to_apep"].copy()
+            channel["to_wind"].copy()
+            channel["to_stars"].copy()
+            
+            # Saving the stellar wind and stars separately at each timestep
             if istep % 1 == 0:
-                filename = f"hydro_outflow_step_{istep}.hdf5"  # saving the system as new hdf5 file at each step
-                if os.path.exists(filename):
-                    os.remove(filename)
-                write_set_to_file(
-                    hydro.gas_particles, filename, "hdf5", append_to_file=False
-                )
-                plot_sph_particles(filename)
-                if os.path.exists(filename):
-                    os.remove(filename)
+                filename_h = f"hydro_outflow_step_{istep}.hdf5"  
+                if os.path.exists(filename_h):
+                    os.remove(filename_h)
+                write_set_to_file(hydro.gas_particles, filename, "hdf5", append_to_file=False)
+
+                filename_g = f"gravity_apep_step_{istep}.hdf5"
+                if os.path.exists(filename_g):
+                    os.remove(filename_g)
+                write_set_to_file(apep, filename_g, "hdf5", append_to_file=False)
 
             istep += 1
+    gravity.stop()
     hydro.stop()
-
 
 if __name__ in ("__main__", "__plot__"):
     main()
