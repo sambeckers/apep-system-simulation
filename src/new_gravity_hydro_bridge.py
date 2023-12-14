@@ -1,3 +1,12 @@
+"""
+hydro_sph
+Created on 02-12-23
+
+@author(s): Sam Beckers, Divyansh Srivastava, Vincent van Rie 
+
+{Outline of code}
+"""
+
 from __future__ import print_function
 import numpy
 from amuse.lab import *
