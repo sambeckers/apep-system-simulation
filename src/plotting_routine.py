@@ -157,7 +157,7 @@ def plot_sph_particles_3D(filename, u_range = None, min_size = 100, max_size = 1
     #     scatter(gd_particles.x, gd_particles.y, c='w', marker='o')
 
 def main():
-    hdf5_files = sorted(glob.glob("hydro_outflow_step_*.hdf5"))
+    hdf5_files = sorted(glob.glob("hydro_outflow_step_*.hdf5"), key=lambda x: int(x.split('_')[-1].split('.')[0]))
     # for filename in hdf5_files:
     #     plot_sph_particles_2D(filename)
     #     plot_sph_particles_3D(filename)
