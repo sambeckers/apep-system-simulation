@@ -11,6 +11,7 @@ from amuse.units import units, constants
 from amuse.lab import Particles
 from amuse.community.seba.interface import SeBa
 from amuse.ext.orbital_elements import new_binary_from_orbital_elements
+from amuse.lab import * 
 
 # Wolf Rayet (WR) binary
 a_binary = 67 | units.au
@@ -65,30 +66,30 @@ def Initialize_inner_binary():
     
     inner_binary.move_to_center()
     setattr(inner_binary, "name", ["WC8", "WN46b"])
+    
+    inner_binary[inner_binary.name=="WC8"].radius = R_WC
+    inner_binary[inner_binary.name=="WN46b"].radius = R_WN
 
-    inner_binary["WC8"].radius = R_WC
-    inner_binary["WN46b"].radius = R_WN
+    inner_binary[inner_binary.name=="WC8"].temperature = T_eff_WC
+    inner_binary[inner_binary.name=="WN46b"].temperature = T_eff_WN
 
-    inner_binary["WC8"].temperature = T_eff_WC
-    inner_binary["WN46b"].temperature = T_eff_WN
+    inner_binary[inner_binary.name=="WC8"].terminal_wind_velocity = v_inf_wind_WC
+    inner_binary[inner_binary.name=="WN46b"].terminal_wind_velocity = v_inf_wind_WN
 
-    inner_binary["WC8"].terminal_wind_velocity = v_inf_wind_WC
-    inner_binary["WN46b"].terminal_wind_velocity = v_inf_wind_WN
+    inner_binary[inner_binary.name=="WC8"].wind_temperature = T_wind_WC
+    inner_binary[inner_binary.name=="WN46b"].wind_temperature = T_wind_WN
 
-    inner_binary["WC8"].wind_temperature = T_wind_WC
-    inner_binary["WN46b"].wind_temperature = T_wind_WN
+    inner_binary[inner_binary.name=="WC8"].dmdt = M_loss_WC
+    inner_binary[inner_binary.name=="WN46b"].dmdt = M_loss_WN
 
-    inner_binary["WC8"].dmdt = M_loss_WC
-    inner_binary["WN46b"].dmdt = M_loss_WN
+    # stellar = SeBa()
+    # stellar.particles.add_particles(inner_binary)
+    # stellar_to_framework = stellar.particles.new_channel_to(inner_binary)
 
-    stellar = SeBa()
-    stellar.particles.add_particles(inner_binary)
-    stellar_to_framework = stellar.particles.new_channel_to(inner_binary)
-
-    stellar.evolve_model(1 | units.Myr)
-    stellar_to_framework.copy_attributes(["mass", "radius", "temperature", "dmdt", "terminal_wind_velocity", "wind_temperature"])
-    dt = 0.1 | units.Myr
-    stellar.evolve_model((1 | units.Myr) + dt)  # evolving for a very short time just to see if it works (will evolve both the WR stars and supergiant separately in future)
+    # stellar.evolve_model(1 | units.Myr)
+    # stellar_to_framework.copy_attributes(["mass", "radius", "temperature", "dmdt", "terminal_wind_velocity", "wind_temperature"])
+    # dt = 0.1 | units.Myr
+    # stellar.evolve_model((1 | units.Myr) + dt)  # evolving for a very short time just to see if it works (will evolve both the WR stars and supergiant separately in future)
 
     return inner_binary
 

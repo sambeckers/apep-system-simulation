@@ -21,7 +21,7 @@ from amuse.community.ph4.interface import ph4
 
 # Own modules
 from initialize_apep import Initialize_inner_binary
-from initialize_apep import M_loss_WN, M_loss_WC, v_inf_wind_WN, v_inf_wind_WC
+from initialize_apep import M_loss_WN, M_loss_WC, v_inf_wind_WN, v_inf_wind_WC, 
 from plotting_routine import plot_sph_particles
 
 
