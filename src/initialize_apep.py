@@ -81,7 +81,7 @@ def Initialize_inner_binary():
 
     inner_binary[inner_binary.name=="WC8"].dmdt = M_loss_WC
     inner_binary[inner_binary.name=="WN46b"].dmdt = M_loss_WN
-
+    inner_binary.Mwind = 0 | units.MSun
     # stellar = SeBa()
     # stellar.particles.add_particles(inner_binary)
     # stellar_to_framework = stellar.particles.new_channel_to(inner_binary)
