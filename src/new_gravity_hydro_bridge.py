@@ -50,8 +50,8 @@ def gravity_hydro_bridge():
     binary = stars[0:2]
     print(binary)
     a = stars.position.length().amax()
-    dt = 10 | units.day
-    mgas = 0.1 * abs(binary.dmdt.sum() * dt)
+    dt = 10 | units.day #this doesn't work for dt = 10 | units.yr
+    mgas = 0.1 * abs(binary.dmdt.sum() * dt) #we tried increasing this to reduce the number of sph particles
 
     stars.h_smooth = 0.0 * a
     stars.u = 0 | units.kms ** 2
@@ -99,7 +99,7 @@ def gravity_hydro_bridge():
     gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
 
     istep = 0
-    while (model_time < 2000 | units.day):
+    while (model_time < 2000 | units.day): # it doesn't work when model is being evolved for 150 years
         model_time += dt
         stars.Mwind += stars.dmdt * dt
         new_sph = new_sph_particles_from_stellar_wind(binary, mgas)
