@@ -6,20 +6,61 @@ Created on 02-12-23
 
 {Outline of code}
 """
+from amuse.lab import *
+from amuse import datamodel
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 import glob
-from amuse.plot import _plot
+from amuse.lab import Particles
 from amuse.io import read_set_from_file
-from amuse.units import units
+from amuse.units import units, constants
+from amuse.plot import _plot
 import numpy as np
 
-def plot_sph_particles_2D(filename):
-    #particles = read_set_from_file(filename, "hdf5")
-    particles = read_set_from_file(filename, "hdf5", copy_history = False, close_file = False) #reading the saved hdf5 files
-    _plot.sph_particles_plot(particles) #plotting routine to plot the SPH particles
-    plt.savefig(filename.replace('.hdf5', '.png'))
+from initialize_apep import Initialize_apep
+apep = Initialize_apep()
 
+def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
+    with plt.rc_context({'axes.edgecolor':'white', 
+                         'xtick.color':'white', 
+                         'ytick.color':'white', 
+                         'figure.facecolor':'black', 
+                         'axes.facecolor':'black', 
+                         'axes.labelcolor':'white', 
+                         'axes.titlecolor':'white'}):
+        for i, filename in enumerate(hdf5_files):
+            print(filename)
+            particles = read_set_from_file(filename, "hdf5", copy_history = False, close_file = False)
+            positions = particles.position
+            h_smooths = particles.h_smooth
+            x, y = positions.x, positions.y
+
+            pos = apep.position
+            x_a, y_a = pos.x, pos.y
+
+            plt.figure(dpi=450)
+            n_pixels = plt.gcf().get_dpi() * plt.gcf().get_size_inches()
+            current_axes = plt.gca()
+            current_axes.set_aspect("equal", adjustable = "datalim")
+            phys_to_pix2 = n_pixels[0]*n_pixels[1] / ((max(x)-min(x))**2 + (max(y)-min(y))**2)
+            sizes = np.minimum(np.maximum((h_smooths**2 * phys_to_pix2), min_size), max_size)
+
+            plt.scatter(x.value_in(units.AU), y.value_in(units.AU), s=sizes, c='orange', alpha=0.1)
+            plt.scatter(x_a.value_in(units.AU), y_a.value_in(units.AU), s=100, c='blue', marker='*', label='Stars')
+            plt.xlabel('x [AU]')
+            plt.ylabel('y [AU]')
+            plt.text(0.1, 0.94, f't = {i} days',
+            horizontalalignment='center',
+            verticalalignment='center',
+            transform = current_axes.transAxes, color='white', fontsize=12)
+            plt.legend(handles = [plt.scatter([],[],marker=".", color='orange', label='Stellar wind')])
+            for i in plt.legend().get_texts():
+                i.set_color("white")
+            plt.tight_layout()
+            plt.savefig(filename.replace('.hdf5', '.png'))
+            plt.close()
+            
+            
 def smart_length_units_for_vector_quantity(quantity):
     length_units = [units.Mpc, units.kpc, units.parsec, units.AU, units.RSun, units.km]
     total_size = max(quantity) - min(quantity)
@@ -28,12 +69,24 @@ def smart_length_units_for_vector_quantity(quantity):
             return length_unit
     return units.m
 
+def plot_sph_particles_2D(filename):
+    """Generate a plot of the hydrodynamics state of a set of SPH particles (from AMUSE)
+    Args:
+        filename : hdf5 file containing the SPH particles
+    """
+    #particles = read_set_from_file(filename, "hdf5")
+    particles = read_set_from_file(filename, "hdf5", copy_history = False, close_file = False) #reading the saved hdf5 files
+    _plot.sph_particles_plot(particles) #plotting routine to plot the SPH particles
+    plt.savefig(filename.replace('.hdf5', '.png'))
+
+
 def plot_sph_particles_3D(filename, u_range = None, min_size = 100, max_size = 10000,
         alpha = 0.1, gd_particles=None, width=None, view=None):
     """
+    Note: adapted from AMUSE to plot in 3D
     Very simple and fast procedure to make a plot of the hydrodynamics state of
     a set of SPH particles. The particles must have the following attributes defined:
-    position, u, h_smooth.
+    position, u, h_smooth. 
 
     :argument particles: the SPH particles to be plotted
     :argument u_range: range of internal energy for color scale [umin, umax]
@@ -104,10 +157,11 @@ def plot_sph_particles_3D(filename, u_range = None, min_size = 100, max_size = 1
     #     scatter(gd_particles.x, gd_particles.y, c='w', marker='o')
 
 def main():
-    hdf5_files = glob.glob("hydro_outflow_step_*.hdf5")
-    for filename in hdf5_files:
-        plot_sph_particles_2D(filename)
-        plot_sph_particles_3D(filename)
+    hdf5_files = sorted(glob.glob("hydro_outflow_step_*.hdf5"))
+    # for filename in hdf5_files:
+    #     plot_sph_particles_2D(filename)
+    #     plot_sph_particles_3D(filename)
+    plot_apep(hdf5_files)
 
 if __name__ == "__main__":
     main()
