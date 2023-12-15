@@ -1,12 +1,3 @@
-"""
-gravity_hydro_bridge
-Created on 02-12-23
-
-@author(s): Sam Beckers, Divyansh Srivastava, Vincent van Rie 
-
-{Outline of code}
-"""
-
 from __future__ import print_function
 import numpy
 from amuse.lab import *
@@ -46,12 +37,11 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
     return new_sph
 
 def gravity_hydro_bridge():
-    stars = Initialize_apep()
-    binary = stars[0:2]
-    print(binary)
+    stars = Initialize_inner_binary()
+    print(stars)
     a = stars.position.length().amax()
-    dt = 10 | units.day #this doesn't work for dt = 10 | units.yr
-    mgas = 0.1 * abs(binary.dmdt.sum() * dt) #we tried increasing this to reduce the number of sph particles
+    dt = .1 | units.day
+    mgas = 0.1 * abs(stars.dmdt.sum() * dt)
 
     stars.h_smooth = 0.0 * a
     stars.u = 0 | units.kms ** 2
@@ -99,10 +89,10 @@ def gravity_hydro_bridge():
     gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
 
     istep = 0
-    while (model_time < 2000 | units.day): # it doesn't work when model is being evolved for 150 years
+    while (model_time < 10 | units.day):
         model_time += dt
         stars.Mwind += stars.dmdt * dt
-        new_sph = new_sph_particles_from_stellar_wind(binary, mgas)
+        new_sph = new_sph_particles_from_stellar_wind(stars, mgas)
         if len(new_sph) > 0:
             ism.add_particles(new_sph)
             ism.synchronize_to(hydro.gas_particles)
