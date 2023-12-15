@@ -70,7 +70,7 @@ def main():
     apep = Initialize_apep()
     #inner_binary = Particles(particles=[apep[apep.name=="WC8"], apep[apep.name=="WN46b"]])
     inner_binary = Initialize_inner_binary()
-    dt = 2 | units.day
+    dt = .2 | units.day #2 days is breaking the pipe
     mgas = 0.1 * abs(inner_binary.dmdt.sum() * dt)  # mass of gas lost through stellar wind
 
     # Setting up gravity
