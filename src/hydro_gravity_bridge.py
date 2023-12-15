@@ -117,7 +117,7 @@ def main():
     while (
         hydro.model_time < 200 | units.day
     ):  # evolving for 2 days just to see if this works
-        innner_binary.Mwind += inner_binary.dmdt * dt
+        inner_binary.Mwind += inner_binary.dmdt * dt
         new_sph = new_sph_particles_from_stellar_wind(inner_binary, mgas)
 
         if len(new_sph) > 0:
