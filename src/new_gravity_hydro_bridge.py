@@ -1,5 +1,5 @@
 """
-hydro_sph
+gravity_hydro_bridge
 Created on 02-12-23
 
 @author(s): Sam Beckers, Divyansh Srivastava, Vincent van Rie 
@@ -45,11 +45,13 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
         new_sph.add_particles(add)
     return new_sph
 
-def gravity_hydro_bridge(a, ecc, t_end, n_steps, Rgas, Mgas, Ngas):
-    stars = Initialize_inner_binary()
+def gravity_hydro_bridge():
+    stars = Initialize_apep()
+    binary = stars[0:2]
+    print(binary)
     a = stars.position.length().amax()
-    dt = 0.1 | units.day
-    mgas = 0.1 * abs(stars.dmdt.sum() * dt)
+    dt = 10 | units.day
+    mgas = 0.1 * abs(binary.dmdt.sum() * dt)
 
     stars.h_smooth = 0.0 * a
     stars.u = 0 | units.kms ** 2
@@ -87,7 +89,7 @@ def gravity_hydro_bridge(a, ecc, t_end, n_steps, Rgas, Mgas, Ngas):
 
     moving_bodies = ParticlesSuperset([stars, ism])
     model_time = 0 | units.day
-    filename = "newstellargravhydro.hdf5"
+    filename = "snewstellargravhydro.hdf5"
     if len(ism) > 0:
         write_set_to_file(moving_bodies, filename, 'hdf5')
 
@@ -97,10 +99,10 @@ def gravity_hydro_bridge(a, ecc, t_end, n_steps, Rgas, Mgas, Ngas):
     gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
 
     istep = 0
-    while model_time < t_end:
+    while (model_time < 2000 | units.day):
         model_time += dt
         stars.Mwind += stars.dmdt * dt
-        new_sph = new_sph_particles_from_stellar_wind(stars, mgas)
+        new_sph = new_sph_particles_from_stellar_wind(binary, mgas)
         if len(new_sph) > 0:
             ism.add_particles(new_sph)
             ism.synchronize_to(hydro.gas_particles)
@@ -110,37 +112,14 @@ def gravity_hydro_bridge(a, ecc, t_end, n_steps, Rgas, Mgas, Ngas):
         channel_from_hydro.copy_attributes(["u"])
 
         if istep % 1 == 0:
-            filename = f"newstellargravhydro_{istep}.hdf5"
+            filename = f"snewstellargravhydro_{istep}.hdf5"
             write_set_to_file(moving_bodies, filename, 'hdf5')
         istep += 1
 
     gravity.stop()
     hydro.stop()
 
-def new_option_parser():
-    from amuse.units.optparse import OptionParser
-    result = OptionParser()
-    result.add_option("-n", dest="n_steps", type="int", default = 1000,
-                      help="number of diagnostics time steps [%default]")
-    result.add_option("-N", dest="Ngas", type="int", default = 1024,
-                      help="number of gas particles [%default]")
-    result.add_option("-M", unit=units.MSun,
-                      dest="Mgas", type="float", default = 1|units.MSun,
-                      help="Mass of the gas [%default]")
-    result.add_option("-R", unit=units.AU,
-                      dest="Rgas", type="float", default = 1|units.AU,
-                      help="Size of the gas distribution [%default]")
-    result.add_option("-a", unit=units.AU,
-                      dest="a", type="float", default = 0.2|units.AU,
-                      help="initial orbital separation [%default]")
-    result.add_option("-e", dest="ecc", type="float", default = 0.0,
-                      help="initial orbital eccentricity [%default]")
-    result.add_option("-t", unit=units.yr,
-                      dest="t_end", type="float", default = 20|units.day,
-                      help="end time of the simulation [%default]")
-    return result
 
 
 if __name__ in ('__main__', '__plot__'):
-    o, arguments = new_option_parser().parse_args()
-    gravity_hydro_bridge(**o.__dict__)
+    gravity_hydro_bridge()
