@@ -69,7 +69,6 @@ def new_sph_particles_from_stellar_wind(
 def main():
     apep = Initialize_apep()
     inner_binary = Particles(particles=[apep[apep.name=="WC8"], apep[apep.name=="WN46b"]])
-    # or 
     dt = 2 | units.day
     mgas = 0.1 * abs(inner_binary.dmdt.sum() * dt)  # mass of gas lost through stellar wind
 
@@ -117,7 +116,7 @@ def main():
     while (
         hydro.model_time < 200 | units.day
     ):  # evolving for 2 days just to see if this works
-        innner_binary.Mwind += apep.dmdt * dt
+        innner_binary.Mwind += inner_binary.dmdt * dt
         new_sph = new_sph_particles_from_stellar_wind(inner_binary, mgas)
 
         if len(new_sph) > 0:
