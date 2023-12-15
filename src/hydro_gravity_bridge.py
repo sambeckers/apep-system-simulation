@@ -22,7 +22,7 @@ from amuse.couple import bridge
 from amuse.ext.composition_methods import *
 
 # Own modules
-from initialize_apep import Initialize_apep
+from initialize_apep import Initialize_apep, Initialize_inner_binary
 from initialize_apep import M_loss_WN, M_loss_WC, v_inf_wind_WN, v_inf_wind_WC, P_binary, d_WR_binary_to_SG
 # from plotting_routine import plot_sph_particles
 
@@ -68,7 +68,8 @@ def new_sph_particles_from_stellar_wind(
 
 def main():
     apep = Initialize_apep()
-    inner_binary = Particles(particles=[apep[apep.name=="WC8"], apep[apep.name=="WN46b"]])
+    #inner_binary = Particles(particles=[apep[apep.name=="WC8"], apep[apep.name=="WN46b"]])
+    inner_binary = Initialize_inner_binary()
     dt = 2 | units.day
     mgas = 0.1 * abs(inner_binary.dmdt.sum() * dt)  # mass of gas lost through stellar wind
 
