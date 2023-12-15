@@ -69,9 +69,9 @@ def new_sph_particles_from_stellar_wind(
 def main():
     apep = Initialize_apep()
     inner_binary = Particles(particles=[apep[apep.name=="WC8"], apep[apep.name=="WN46b"]])
-
+    # or 
     dt = 2 | units.day
-    mgas = 0.1 * abs(apep.dmdt.sum() * dt)  # mass of gas lost through stellar wind
+    mgas = 0.1 * abs(inner_binary.dmdt.sum() * dt)  # mass of gas lost through stellar wind
 
     # Setting up gravity
     converter = nbody_system.nbody_to_si(apep.mass.sum(), d_WR_binary_to_SG)
@@ -117,7 +117,7 @@ def main():
     while (
         hydro.model_time < 200 | units.day
     ):  # evolving for 2 days just to see if this works
-        apep.Mwind += apep.dmdt * dt
+        innner_binary.Mwind += apep.dmdt * dt
         new_sph = new_sph_particles_from_stellar_wind(inner_binary, mgas)
 
         if len(new_sph) > 0:
@@ -136,7 +136,7 @@ def main():
                 filename_h = f"hydro_outflow_step_{istep}.hdf5"  
                 if os.path.exists(filename_h):
                     os.remove(filename_h)
-                write_set_to_file(hydro.gas_particles, filename, "hdf5", append_to_file=False)
+                write_set_to_file(hydro.gas_particles, filename_h, "hdf5", append_to_file=False)
 
                 filename_g = f"gravity_apep_step_{istep}.hdf5"
                 if os.path.exists(filename_g):
