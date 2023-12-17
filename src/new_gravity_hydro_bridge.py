@@ -8,6 +8,7 @@ Created on 02-12-23
 """
 from __future__ import print_function
 import numpy
+import os
 from amuse.lab import *
 from amuse.couple import bridge
 from amuse import datamodel
@@ -19,6 +20,7 @@ from initialize_apep import Initialize_inner_binary, Initialize_apep
 from amuse.units.constants import G
 from amuse.io import write_set_to_file
 from amuse.community.gadget2.interface import Gadget2
+
 
 def new_sph_particles_from_stellar_wind(stars, mgas):
     new_sph = datamodel.Particles(0)
@@ -46,19 +48,20 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
         new_sph.add_particles(add)
     return new_sph
 
+
 def gravity_hydro_bridge():
     stars = Initialize_apep()
     binary = stars[0:2]
     print(binary)
     a = stars.position.length().amax()
     dt = 1 | units.yr
-    mgas = .1 * abs(binary.dmdt.sum() * dt)
+    mgas = 0.1 * abs(binary.dmdt.sum() * dt)
 
     stars.h_smooth = 0.0 * a
-    stars.u = 0 | units.kms ** 2
+    stars.u = 0 | units.kms**2
 
     converter = nbody_system.nbody_to_si(stars.mass.sum(), a)
-    #gravity = Bhtree(converter)
+    # gravity = Bhtree(converter)
     gravity = ph4(converter, redirection="none")
     gravity.particles.add_particles(stars)
     gravity.parameters.epsilon_squared = (10 | units.RSun) ** 2
@@ -70,24 +73,24 @@ def gravity_hydro_bridge():
     ism.mass = mgas
     ism.position = (0, 0, 0) | units.AU
     ism.velocity = (0, 0, 0) | units.kms
-    ism.u = 0 | units.kms ** 2
+    ism.u = 0 | units.kms**2
     ism.h_smooth = 0.01 * a
-    #hydro = Gadget2(converter)
+    # hydro = Gadget2(converter)
     hydro = Fi(converter, redirection="none")
-    #hydro.parameters.timestep = dt
+    # hydro.parameters.timestep = dt
     hydro.parameters.use_hydro_flag = True
     hydro.parameters.radiation_flag = False
     hydro.parameters.self_gravity_flag = True
     hydro.parameters.integrate_entropy_flag = False
-    hydro.parameters.gamma = 1.
+    hydro.parameters.gamma = 1.0
     hydro.parameters.isothermal_flag = True
     hydro.parameters.epsilon_squared = (10 | units.RSun) ** 2
 
-    hydro.parameters.timestep = 1 | units.s #Steven's patch
+    hydro.parameters.timestep = 1 | units.s  # Steven's patch
     print(hydro.model_time)
-    hydro.evolve_model(hydro.model_time )
+    hydro.evolve_model(hydro.model_time)
     hydro.parameters.timestep = dt
-    hydro.evolve_model(0 |units.yr)
+    hydro.evolve_model(0 | units.yr)
     if len(ism) > 0:
         hydro.gas_particles.add_particles(ism)
     hydro.parameters.periodic_box_size = 10000 * a
@@ -99,17 +102,17 @@ def gravity_hydro_bridge():
     model_time = 0 | units.yr
     filename = "snewstellargravhydro.hdf5"
     if len(ism) > 0:
-        write_set_to_file(moving_bodies, filename, 'hdf5')
+        write_set_to_file(moving_bodies, filename, "hdf5")
 
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
-    gravhydro.add_system(hydro, (gravity,))
-    gravhydro.timestep = dt #min(dt, 2 * hydro.parameters.timestep)
+    gravhydro.add_system(hydro, (gravity,), False)
+    gravhydro.timestep = dt  # min(dt, 2 * hydro.parameters.timestep)
 
     istep = 0
     save_every = 1
 
-    while (model_time < 150 | units.yr):
+    while model_time < 150 | units.yr:
         model_time += dt
         stars.Mwind += stars.dmdt * dt
         new_sph = new_sph_particles_from_stellar_wind(binary, mgas)
@@ -121,19 +124,26 @@ def gravity_hydro_bridge():
         channel_from_hydro.copy()
         channel_from_hydro.copy_attributes(["u"])
 
-        if istep % 1/save_every == 0:
+        # for bodies in moving_bodies:
+        #     if bodies.position.x > 1000 * a:
+        #         print("bodies: " + str(bodies.position.x.value_in(units.AU)))
+        # for sph in ism:
+        #     if sph.position.x > 1000 * a:
+        #         print("sph: " + str(sph.position.x.value_in(units.AU)))
+
+        if istep % 1 / save_every == 0:
             filename = f"snewstellargravhydro_{int(istep/save_every)}.hdf5"
-            write_set_to_file(moving_bodies, filename, 'hdf5')
+            if os.path.exists(filename):
+                os.remove(filename)
+            write_set_to_file(ism, filename, "hdf5")
         istep += 1
 
     gravity.stop()
     hydro.stop()
 
 
-
-if __name__ in ('__main__', '__plot__'):
+if __name__ in ("__main__", "__plot__"):
     gravity_hydro_bridge()
-
 
 
 # if __name__ in ('__main__', '__plot__'):
