@@ -107,6 +107,8 @@ def gravity_hydro_bridge():
     gravhydro.timestep = dt #min(dt, 2 * hydro.parameters.timestep)
 
     istep = 0
+    save_every = 1
+
     while (model_time < 150 | units.yr):
         model_time += dt
         stars.Mwind += stars.dmdt * dt
@@ -119,8 +121,8 @@ def gravity_hydro_bridge():
         channel_from_hydro.copy()
         channel_from_hydro.copy_attributes(["u"])
 
-        if istep % 1 == 0:
-            filename = f"snewstellargravhydro_{istep}.hdf5"
+        if istep % 1/save_every == 0:
+            filename = f"snewstellargravhydro_{int(istep/save_every)}.hdf5"
             write_set_to_file(moving_bodies, filename, 'hdf5')
         istep += 1
 
@@ -134,5 +136,5 @@ if __name__ in ('__main__', '__plot__'):
 
 
 
-if __name__ in ('__main__', '__plot__'):
-    gravity_hydro_bridge()
+# if __name__ in ('__main__', '__plot__'):
+#     gravity_hydro_bridge()
