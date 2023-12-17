@@ -6,18 +6,19 @@ Created on 02-12-23
 
 {Outline of code}
 """
-
 from __future__ import print_function
 import numpy
 from amuse.lab import *
 from amuse.couple import bridge
 from amuse import datamodel
+from amuse.community.bhtree.interface import Bhtree
 from amuse.community.ph4.interface import ph4
 from amuse.community.fi.interface import Fi
 from amuse.ext.evrard_test import uniform_unit_sphere
 from initialize_apep import Initialize_inner_binary, Initialize_apep
 from amuse.units.constants import G
 from amuse.io import write_set_to_file
+from amuse.community.gadget2.interface import Gadget2
 
 def new_sph_particles_from_stellar_wind(stars, mgas):
     new_sph = datamodel.Particles(0)
@@ -50,13 +51,14 @@ def gravity_hydro_bridge():
     binary = stars[0:2]
     print(binary)
     a = stars.position.length().amax()
-    dt = 10 | units.day #this doesn't work for dt = 10 | units.yr
-    mgas = 0.1 * abs(binary.dmdt.sum() * dt) #we tried increasing this to reduce the number of sph particles
+    dt = 1 | units.yr
+    mgas = .1 * abs(binary.dmdt.sum() * dt)
 
     stars.h_smooth = 0.0 * a
     stars.u = 0 | units.kms ** 2
 
     converter = nbody_system.nbody_to_si(stars.mass.sum(), a)
+    #gravity = Bhtree(converter)
     gravity = ph4(converter, redirection="none")
     gravity.particles.add_particles(stars)
     gravity.parameters.epsilon_squared = (10 | units.RSun) ** 2
@@ -68,11 +70,11 @@ def gravity_hydro_bridge():
     ism.mass = mgas
     ism.position = (0, 0, 0) | units.AU
     ism.velocity = (0, 0, 0) | units.kms
-    ism.u = 0 | units.m ** 2 * units.s ** -2
+    ism.u = 0 | units.kms ** 2
     ism.h_smooth = 0.01 * a
-
+    #hydro = Gadget2(converter)
     hydro = Fi(converter, redirection="none")
-    hydro.parameters.timestep = dt / 8.
+    #hydro.parameters.timestep = dt
     hydro.parameters.use_hydro_flag = True
     hydro.parameters.radiation_flag = False
     hydro.parameters.self_gravity_flag = True
@@ -80,6 +82,12 @@ def gravity_hydro_bridge():
     hydro.parameters.gamma = 1.
     hydro.parameters.isothermal_flag = True
     hydro.parameters.epsilon_squared = (10 | units.RSun) ** 2
+
+    hydro.parameters.timestep = 1 | units.s #Steven's patch
+    print(hydro.model_time)
+    hydro.evolve_model(hydro.model_time )
+    hydro.parameters.timestep = dt
+    hydro.evolve_model(0 |units.yr)
     if len(ism) > 0:
         hydro.gas_particles.add_particles(ism)
     hydro.parameters.periodic_box_size = 10000 * a
@@ -88,7 +96,7 @@ def gravity_hydro_bridge():
     channel_from_to_hydro = ism.new_channel_to(hydro.gas_particles)
 
     moving_bodies = ParticlesSuperset([stars, ism])
-    model_time = 0 | units.day
+    model_time = 0 | units.yr
     filename = "snewstellargravhydro.hdf5"
     if len(ism) > 0:
         write_set_to_file(moving_bodies, filename, 'hdf5')
@@ -96,10 +104,10 @@ def gravity_hydro_bridge():
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
     gravhydro.add_system(hydro, (gravity,))
-    gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
+    gravhydro.timestep = dt #min(dt, 2 * hydro.parameters.timestep)
 
     istep = 0
-    while (model_time < 2000 | units.day): # it doesn't work when model is being evolved for 150 years
+    while (model_time < 150 | units.yr):
         model_time += dt
         stars.Mwind += stars.dmdt * dt
         new_sph = new_sph_particles_from_stellar_wind(binary, mgas)
@@ -118,6 +126,11 @@ def gravity_hydro_bridge():
 
     gravity.stop()
     hydro.stop()
+
+
+
+if __name__ in ('__main__', '__plot__'):
+    gravity_hydro_bridge()
 
 
 
