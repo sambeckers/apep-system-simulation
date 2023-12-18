@@ -85,7 +85,7 @@ def gravity_hydro_bridge():
     wind.h_smooth = 0.01 * d_WR_binary_to_SG
 
     # Setting up the hydrodynamics
-    hydro = Fi(converter, redirection="none", mode="openmp")
+    hydro = Fi(converter, redirection="none")
     if len(wind) > 0:
         hydro.gas_particles.add_particles(wind)
         hydro.dm_particles.add_particles(inner_binary.as_set())
@@ -113,7 +113,7 @@ def gravity_hydro_bridge():
     # Setting up the bridge between gravity and hydrodynamics
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
-    gravhydro.add_system(hydro, (gravity,))
+    gravhydro.add_system(hydro, (gravity,), False)
     gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
 
     # Evolving the system
