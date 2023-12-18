@@ -72,7 +72,7 @@ def gravity_hydro_bridge():
     converter = nbody_system.nbody_to_si(apep.mass.sum(), d_WR_binary_to_SG)
     gravity = ph4(converter)
     gravity.particles.add_particles(apep)
-    gravity.paramaters.epsilon_squared = (10|units.RSun)**2
+    gravity.parameters.epsilon_squared = (10|units.RSun)**2
     channel = {"from apep:": apep.new_channel_to(gravity.particles),
                 "to_apep": gravity.particles.new_channel_to(apep)}
 
