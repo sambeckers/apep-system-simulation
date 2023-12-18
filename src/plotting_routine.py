@@ -63,7 +63,6 @@ def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
             plt.savefig(filename.replace('.hdf5', '.png'))
             plt.close()
             
-            
 def smart_length_units_for_vector_quantity(quantity):
     length_units = [units.Mpc, units.kpc, units.parsec, units.AU, units.RSun, units.km]
     total_size = max(quantity) - min(quantity)
