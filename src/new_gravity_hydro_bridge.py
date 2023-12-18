@@ -54,7 +54,7 @@ def gravity_hydro_bridge():
     binary = stars[0:2]
     print(binary)
     a = stars.position.length().amax()
-    dt = 1 | units.yr
+    dt = .1 | units.yr #changed from 1 yr because the SPH particles were shooting away in that time
     mgas = 0.1 * abs(binary.dmdt.sum() * dt)
 
     stars.h_smooth = 0.0 * a
@@ -77,7 +77,7 @@ def gravity_hydro_bridge():
     ism.h_smooth = 0.01 * a
     # hydro = Gadget2(converter)
     hydro = Fi(converter, redirection="none")
-    # hydro.parameters.timestep = dt
+    hydro.parameters.timestep = dt/8. #smaller_dt for hydro is better
     hydro.parameters.use_hydro_flag = True
     hydro.parameters.radiation_flag = False
     hydro.parameters.self_gravity_flag = True
@@ -107,7 +107,7 @@ def gravity_hydro_bridge():
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
     gravhydro.add_system(hydro, (gravity,), False)
-    gravhydro.timestep = dt  # min(dt, 2 * hydro.parameters.timestep)
+    gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
 
     istep = 0
     save_every = 1
