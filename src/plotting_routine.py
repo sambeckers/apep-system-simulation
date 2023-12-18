@@ -20,8 +20,6 @@ def plot_sph_particles_2D(filename):
     _plot.sph_particles_plot(particles) #plotting routine to plot the SPH particles
     plt.savefig(filename.replace('.hdf5', '.png'))
 
-<<<<<<< Updated upstream
-=======
 def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
     with plt.rc_context({'axes.edgecolor':'white', 
                          'xtick.color':'white', 
@@ -65,8 +63,6 @@ def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
             plt.savefig(filename.replace('.hdf5', '.png'))
             plt.close()
             
-            
->>>>>>> Stashed changes
 def smart_length_units_for_vector_quantity(quantity):
     length_units = [units.Mpc, units.kpc, units.parsec, units.AU, units.RSun, units.km]
     total_size = max(quantity) - min(quantity)
