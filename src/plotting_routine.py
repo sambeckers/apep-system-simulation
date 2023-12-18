@@ -20,8 +20,6 @@ def plot_sph_particles_2D(filename):
     _plot.sph_particles_plot(particles) #plotting routine to plot the SPH particles
     plt.savefig(filename.replace('.hdf5', '.png'))
 
-<<<<<<< Updated upstream
-=======
 def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
     with plt.rc_context({'axes.edgecolor':'white', 
                          'xtick.color':'white', 
@@ -50,7 +48,7 @@ def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
             phys_to_pix2 = n_pixels[0]*n_pixels[1] / ((max(x)-min(x))**2 + (max(y)-min(y))**2)
             sizes = np.minimum(np.maximum((h_smooths**2 * phys_to_pix2), min_size), max_size)
 
-            plt.scatter(x.value_in(units.AU), y.value_in(units.AU), s=sizes, c='orange', alpha=0.1)
+            # plt.scatter(x.value_in(units.AU), y.value_in(units.AU), s=sizes, c='orange', alpha=0.1)
             plt.scatter(x_a.value_in(units.AU), y_a.value_in(units.AU), s=100, c='blue', marker='*', label='Stars')
             plt.xlabel('x [AU]')
             plt.ylabel('y [AU]')
@@ -66,7 +64,6 @@ def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
             plt.close()
             
             
->>>>>>> Stashed changes
 def smart_length_units_for_vector_quantity(quantity):
     length_units = [units.Mpc, units.kpc, units.parsec, units.AU, units.RSun, units.km]
     total_size = max(quantity) - min(quantity)
@@ -151,18 +148,11 @@ def plot_sph_particles_3D(filename, u_range = None, min_size = 100, max_size = 1
     #     scatter(gd_particles.x, gd_particles.y, c='w', marker='o')
 
 def main():
-<<<<<<< Updated upstream
-    hdf5_files = glob.glob("hydro_outflow_step_*.hdf5")
-    for filename in hdf5_files:
-        plot_sph_particles_2D(filename)
-        plot_sph_particles_3D(filename)
-=======
     hdf5_files = sorted(glob.glob("snewstellargravhydro_*.hdf5"), key=lambda x: int(x.split('_')[-1].split('.')[0]))
     # for filename in hdf5_files:
     #     plot_sph_particles_2D(filename)
     #     plot_sph_particles_3D(filename)
     plot_apep(hdf5_files)
->>>>>>> Stashed changes
 
 if __name__ == "__main__":
     main()
