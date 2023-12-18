@@ -93,7 +93,7 @@ def gravity_hydro_bridge():
     hydro.evolve_model(0 | units.yr)
     if len(ism) > 0:
         hydro.gas_particles.add_particles(ism)
-    hydro.parameters.periodic_box_size = 10000 * a
+    #hydro.parameters.periodic_box_size = 10000 * a
 
     channel_from_hydro = hydro.gas_particles.new_channel_to(ism)
     channel_from_to_hydro = ism.new_channel_to(hydro.gas_particles)
