@@ -91,6 +91,7 @@ def gravity_hydro_bridge():
         hydro.dm_particles.add_particles(inner_binary.as_set())
     hydro.parameters.use_hydro_flag = True
     hydro.parameters.radiation_flag = False
+    hydro.parameters.integrate_entropy_flag = False
     hydro.parameters.self_gravity_flag = True
     hydro.parameters.gamma = 1
     hydro.parameters.isothermal_flag = True
@@ -113,7 +114,7 @@ def gravity_hydro_bridge():
     # Setting up the bridge between gravity and hydrodynamics
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
-    gravhydro.add_system(hydro, (gravity,), False)
+    gravhydro.add_system(hydro, (gravity,))
     gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
 
     # Evolving the system
@@ -121,7 +122,8 @@ def gravity_hydro_bridge():
 
     istep = 0
     save_every = 1
-
+    model_time = 0 | units.yr
+    
     while model_time < 150 | units.yr:
         model_time += dt
 
