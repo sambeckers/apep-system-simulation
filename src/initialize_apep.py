@@ -19,7 +19,7 @@ from amuse.ext.orbital_elements import (
 a_binary = 67 | units.au
 P_binary = 125 | units.yr
 ecc_binary = 0.7
-inc_binary = 25 | units.deg
+inc_binary = 0 | units.deg
 omega_binary = 0 | units.deg
 
 M_enclosed_binary = 30 | units.MSun
