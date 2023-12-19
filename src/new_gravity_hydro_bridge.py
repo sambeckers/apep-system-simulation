@@ -15,6 +15,7 @@ from amuse import datamodel
 from amuse.community.bhtree.interface import Bhtree
 from amuse.community.ph4.interface import ph4
 from amuse.community.fi.interface import Fi
+from amuse.community.seba.interface import SeBa
 from amuse.ext.evrard_test import uniform_unit_sphere
 from initialize_apep import Initialize_inner_binary, Initialize_apep
 from amuse.units.constants import G
@@ -60,6 +61,23 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
     return new_sph
 
 
+def inject_supernova_energy(
+    gas_particles, explosion_energy=1.0e51 | units.erg, exploding_region=10 | units.RSun
+):
+    inner = gas_particles.select(
+        lambda pos: pos.length_squared() < exploding_region**2, ["position"]
+    )
+    print(len(inner), "innermost particles selected.")
+    print(
+        "Adding",
+        explosion_energy / inner.total_mass(),
+        "of supernova " "(specific internal) energy to each of the n=",
+        len(inner),
+        "SPH particles.",
+    )
+    inner.u += explosion_energy / inner.total_mass()
+
+
 def gravity_hydro_bridge():
     stars = Initialize_apep()
     binary = stars[0:2]
@@ -67,10 +85,10 @@ def gravity_hydro_bridge():
     a = stars.position.length().amax()
 
     dt = (
-        0.1 | units.yr
+        0.01 | units.yr
     )  # changed from 1 yr because the SPH particles were shooting away in that time
     binary_mass_loss_rate = abs(binary.dmdt.sum() * dt)
-    mgas = 0.01 * binary_mass_loss_rate
+    mgas = 0.05 * binary_mass_loss_rate
 
     stars.h_smooth = 0.0 * a
     stars.u = 0 | units.kms**2
@@ -124,7 +142,7 @@ def gravity_hydro_bridge():
 
     moving_bodies = ParticlesSuperset([stars, ism])
     model_time = 0 | units.yr
-    filename = "snewstellargravhydroTEST.hdf5"
+    filename = "snewstellargravhydroSUPERNOVA.hdf5"
     if len(ism) > 0:
         write_set_to_file(moving_bodies, filename, "hdf5")
 
@@ -136,8 +154,30 @@ def gravity_hydro_bridge():
     istep = 0
     save_every = 1
     first_time = True
+    not_exploded = True
 
-    while model_time < 150 | units.yr:
+    while model_time < 100 | units.yr:
+        if model_time > 0.2 | units.yr and not_exploded:
+            not_exploded = False
+            
+            model = convert_stellar_model_to_SPH(
+                stars[2],
+                100,
+                seed=12345,
+                with_core_particle=True,
+                target_core_mass=1.4 | units.MSun,
+            )
+            core, gas_without_core, core_radius = (
+                model.core_particle,
+                model.gas_particles,
+                model.core_radius,
+            )
+
+            inject_supernova_energy(gas_without_core, exploding_region=1 | units.RSun)
+
+            hydro.gas_particles.add_particles(gas_without_core)
+            hydro.dm_particles.add_particle(core)
+
         model_time += gravhydro.timestep
         binary.Mwind += binary.dmdt * dt
         print("Wind mass loss: ", binary.Mwind)
@@ -167,7 +207,7 @@ def gravity_hydro_bridge():
         print(ism[3].velocity.length().in_(units.kms))
 
         if istep % 1 / save_every == 0:
-            filename = f"snewstellargravhydroTEST_{int(istep/save_every)}.hdf5"
+            filename = f"snewstellargravhydroSUPERNOVA_{int(istep/save_every)}.hdf5"
             if os.path.exists(filename):
                 os.remove(filename)
             write_set_to_file(moving_bodies, filename, "hdf5")
