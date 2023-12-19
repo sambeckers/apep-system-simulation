@@ -18,8 +18,9 @@ from amuse.community.fi.interface import Fi
 from amuse.ext.evrard_test import uniform_unit_sphere
 from initialize_apep import Initialize_inner_binary, Initialize_apep
 from amuse.units.constants import G
-from amuse.io import write_set_to_file
+from amuse.io import write_set_to_file, read_set_from_file
 from amuse.community.gadget2.interface import Gadget2
+from amuse.ext.star_to_sph import convert_stellar_model_to_SPH
 
 
 def new_sph_particles_from_stellar_wind(stars, mgas):
@@ -35,6 +36,13 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
         add.mass = mgas
         add.h_smooth = 0.0 | units.parsec
 
+        if si.name == "WC8":
+            vrot = 530 | units.kms
+        elif si.name == "WN46b":
+            vrot = 0.0 | units.kms
+        else:
+            raise ValueError("No star found")
+
         dx, dy, dz = uniform_unit_sphere(Ngas).make_xyz()
         add.x = si.x + (dx * si.radius)
         add.y = si.y + (dy * si.radius)
@@ -44,8 +52,8 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
             r = r / r.length()
             v_wind = (G * si.mass / (add[ri].position - si.position).length()).sqrt()
             add[ri].u = 0.5 * (v_wind) ** 2
-            add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity
-            add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity
+            add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity + r[1] * vrot
+            add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity + r[0] * vrot
             add[ri].vz = si.vz + r[2] * si.terminal_wind_velocity
             # print(add[ri].velocity.length().in_(units.kms))
         new_sph.add_particles(add)
@@ -116,7 +124,7 @@ def gravity_hydro_bridge():
 
     moving_bodies = ParticlesSuperset([stars, ism])
     model_time = 0 | units.yr
-    filename = "snewstellargravhydro.hdf5"
+    filename = "snewstellargravhydroTEST.hdf5"
     if len(ism) > 0:
         write_set_to_file(moving_bodies, filename, "hdf5")
 
@@ -129,9 +137,8 @@ def gravity_hydro_bridge():
     save_every = 1
     first_time = True
 
-    while model_time < 5 | units.yr:
-        dt = dt * 1.01
-        model_time += dt
+    while model_time < 150 | units.yr:
+        model_time += gravhydro.timestep
         binary.Mwind += binary.dmdt * dt
         print("Wind mass loss: ", binary.Mwind)
 
@@ -160,7 +167,7 @@ def gravity_hydro_bridge():
         print(ism[3].velocity.length().in_(units.kms))
 
         if istep % 1 / save_every == 0:
-            filename = f"snewstellargravhydro_{int(istep/save_every)}.hdf5"
+            filename = f"snewstellargravhydroTEST_{int(istep/save_every)}.hdf5"
             if os.path.exists(filename):
                 os.remove(filename)
             write_set_to_file(moving_bodies, filename, "hdf5")
