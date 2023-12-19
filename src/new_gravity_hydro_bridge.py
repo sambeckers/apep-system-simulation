@@ -26,8 +26,10 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
     new_sph = datamodel.Particles(0)
     for si in stars:
         Ngas = int(si.Mwind / mgas)
-        print(Ngas)
+        si.Mwind -= Ngas * mgas
+        print(f"Number of new particles for {si.name}", Ngas)
         if Ngas == 0:
+            print("No new particles")
             continue
         add = datamodel.Particles(Ngas)
         add.mass = mgas
@@ -41,10 +43,11 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
             r = add[ri].position - si.position
             r = r / r.length()
             v_wind = (G * si.mass / (add[ri].position - si.position).length()).sqrt()
-            add.u = 0.5 * (v_wind) ** 2
-            add.vx = si.vx + r[0] * si.terminal_wind_velocity
-            add.vy = si.vy + r[1] * si.terminal_wind_velocity
-            add.vz = si.vz + r[2] * si.terminal_wind_velocity
+            add[ri].u = 0.5 * (v_wind) ** 2
+            add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity
+            add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity
+            add[ri].vz = si.vz + r[2] * si.terminal_wind_velocity
+            # print(add[ri].velocity.length().in_(units.kms))
         new_sph.add_particles(add)
     return new_sph
 
@@ -54,8 +57,12 @@ def gravity_hydro_bridge():
     binary = stars[0:2]
     print(binary)
     a = stars.position.length().amax()
-    dt = .1 | units.yr #changed from 1 yr because the SPH particles were shooting away in that time
-    mgas = 0.1 * abs(binary.dmdt.sum() * dt)
+
+    dt = (
+        0.1 | units.yr
+    )  # changed from 1 yr because the SPH particles were shooting away in that time
+    binary_mass_loss_rate = abs(binary.dmdt.sum() * dt)
+    mgas = 0.01 * binary_mass_loss_rate
 
     stars.h_smooth = 0.0 * a
     stars.u = 0 | units.kms**2
@@ -66,8 +73,12 @@ def gravity_hydro_bridge():
     gravity.particles.add_particles(stars)
     gravity.parameters.epsilon_squared = (10 | units.RSun) ** 2
 
-    channel_from_gravity = gravity.particles.new_channel_to(stars)
-    channel_from_to_gravity = stars.new_channel_to(gravity.particles)
+    channel = {
+        "from apep:": stars.new_channel_to(gravity.particles),
+        "to_apep": gravity.particles.new_channel_to(stars),
+    }
+    # channel_from_gravity = gravity.particles.new_channel_to(stars)
+    # channel_from_to_gravity = stars.new_channel_to(gravity.particles)
 
     ism = Particles(0)
     ism.mass = mgas
@@ -77,7 +88,7 @@ def gravity_hydro_bridge():
     ism.h_smooth = 0.01 * a
     # hydro = Gadget2(converter)
     hydro = Fi(converter, redirection="none")
-    hydro.parameters.timestep = dt/8. #smaller_dt for hydro is better
+    hydro.parameters.timestep = dt / 8.0  # smaller_dt for hydro is better
     hydro.parameters.use_hydro_flag = True
     hydro.parameters.radiation_flag = False
     hydro.parameters.self_gravity_flag = True
@@ -93,10 +104,15 @@ def gravity_hydro_bridge():
     hydro.evolve_model(0 | units.yr)
     if len(ism) > 0:
         hydro.gas_particles.add_particles(ism)
-    #hydro.parameters.periodic_box_size = 10000 * a
+    # hydro.parameters.periodic_box_size = 10000 * a
 
-    channel_from_hydro = hydro.gas_particles.new_channel_to(ism)
-    channel_from_to_hydro = ism.new_channel_to(hydro.gas_particles)
+    channel.update({"from_wind": ism.new_channel_to(hydro.gas_particles)})
+    channel.update({"to_wind": hydro.gas_particles.new_channel_to(ism)})
+    channel.update({"from_stars": binary.new_channel_to(hydro.dm_particles)})
+    channel.update({"to_stars": hydro.dm_particles.new_channel_to(binary)})
+
+    # channel_from_hydro = hydro.gas_particles.new_channel_to(ism)
+    # channel_from_to_hydro = ism.new_channel_to(hydro.gas_particles)
 
     moving_bodies = ParticlesSuperset([stars, ism])
     model_time = 0 | units.yr
@@ -111,31 +127,43 @@ def gravity_hydro_bridge():
 
     istep = 0
     save_every = 1
+    first_time = True
 
-    while model_time < 150 | units.yr:
+    while model_time < 5 | units.yr:
+        dt = dt * 1.01
         model_time += dt
-        stars.Mwind += stars.dmdt * dt
-        new_sph = new_sph_particles_from_stellar_wind(binary, mgas)
+        binary.Mwind += binary.dmdt * dt
+        print("Wind mass loss: ", binary.Mwind)
+
+        # First time we must guarantee some sph particles otherwise it crashes
+        if first_time:
+            mass_sph = 0.1 * binary_mass_loss_rate
+
+        new_sph = new_sph_particles_from_stellar_wind(binary, mass_sph)
+
+        if first_time:
+            mass_sph = mgas
+            first_time = False
+
+        print("Total numver of particles", len(ism))
         if len(new_sph) > 0:
             ism.add_particles(new_sph)
+            print(ism[3].velocity.length().in_(units.kms))
             ism.synchronize_to(hydro.gas_particles)
         gravhydro.evolve_model(model_time)
-        channel_from_gravity.copy()
-        channel_from_hydro.copy()
-        channel_from_hydro.copy_attributes(["u"])
-
-        # for bodies in moving_bodies:
-        #     if bodies.position.x > 1000 * a:
-        #         print("bodies: " + str(bodies.position.x.value_in(units.AU)))
-        # for sph in ism:
-        #     if sph.position.x > 1000 * a:
-        #         print("sph: " + str(sph.position.x.value_in(units.AU)))
+        channel["to_apep"].copy()  # channel_from_gravity.copy()
+        channel["to_wind"].copy()  # channel_from_hydro.copy()
+        channel["to_stars"].copy()
+        channel["to_wind"].copy_attributes(
+            ["u"]
+        )  # channel_from_hydro.copy_attributes(["u"])
+        print(ism[3].velocity.length().in_(units.kms))
 
         if istep % 1 / save_every == 0:
             filename = f"snewstellargravhydro_{int(istep/save_every)}.hdf5"
             if os.path.exists(filename):
                 os.remove(filename)
-            write_set_to_file(ism, filename, "hdf5")
+            write_set_to_file(moving_bodies, filename, "hdf5")
         istep += 1
 
     gravity.stop()

@@ -16,15 +16,17 @@ from amuse.units import units
 import numpy as np
 import re
 
+frame_size = 2000
+
 def plot_sph_particles_2D(filename):
     #particles = read_set_from_file(filename, "hdf5")
     particles = read_set_from_file(filename, "hdf5", copy_history = False, close_file = False) #reading the saved hdf5 files
     #print(particles)
     #_plot.plot(particles)
-    xmin = -1000 | units.AU
-    xmax = 1000 | units.AU
-    ymin = -1000 | units.AU
-    ymax = 1000 | units.AU
+    xmin = -frame_size | units.AU
+    xmax = frame_size | units.AU
+    ymin = -frame_size | units.AU
+    ymax = frame_size | units.AU
     _plot.sph_particles_plot(particles[3:], gd_particles=particles[0:3],  min_size = 10, max_size= 100, alpha = .05, view=[xmin, xmax, ymin, ymax]) #plotting routine to plot the SPH particles
     plt.savefig(filename.replace('.hdf5', '.png'))
 
@@ -128,8 +130,8 @@ def plot_particles(sph_particles, stars, timestep, filename):
     plt.title(f"timestep = {timestep}")
     plt.xlabel('X (AU)')
     plt.ylabel('Y (AU)')
-    plt.xlim(-1000, 1000)
-    plt.ylim(-1000, 1000)
+    plt.xlim(-frame_size, frame_size)
+    plt.ylim(-frame_size, frame_size)
     plt.savefig(filename.replace('.hdf5', '.png'))
     plt.close()
 
