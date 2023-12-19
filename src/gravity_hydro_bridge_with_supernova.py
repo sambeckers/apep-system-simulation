@@ -59,6 +59,19 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
     return new_sph
 
 
+def inject_supernova_energy(gas_particles,
+                            explosion_energy=1.0e+51|units.erg,
+                            exploding_region=10|units.RSun):
+    inner = gas_particles.select(
+        lambda pos: pos.length_squared() < exploding_region**2,
+        ["position"])
+    print(len(inner), "innermost particles selected.")
+    print("Adding", explosion_energy / inner.total_mass(), "of supernova " \
+        "(specific internal) energy to each of the n=", len(inner), "SPH particles.")
+    inner.u += explosion_energy / inner.total_mass()
+    return inner
+
+
 def gravity_hydro_bridge():
     stars = Initialize_apep()
     binary = stars[0:2]
@@ -170,6 +183,7 @@ def gravity_hydro_bridge():
             print("SUPERNOVA")
             print('*' * 100)
             print('Core Radius',core_radius)
+            supernova_gas= inject_supernova_energy(supernova_gas, exploding_region=1 | units.RSun)
             if len(supernova_gas) > 0:
                 ism.add_particles(supernova_gas)
                 moving_bodies.remove_particle(particle=moving_bodies[1])
@@ -188,7 +202,7 @@ def gravity_hydro_bridge():
         print(ism[3].velocity.length().in_(units.kms))
 
         if istep % 1 / save_every == 0:
-            filename = f"snewstellargravhydroTEST_{int(istep/save_every)}.hdf5"
+            filename = f"stellargravhydro_supernova_{int(istep/save_every)}.hdf5"
             if os.path.exists(filename):
                 os.remove(filename)
             write_set_to_file(moving_bodies, filename, "hdf5")
