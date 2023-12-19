@@ -46,9 +46,9 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
             add[ri].u = 0.5 * (v_wind) ** 2
             if si.name == "WC8":
                 v_rot = 500 | units.kms
-                omega = (v_rot / si.radius) * 2*np.pi
-                add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity + np.cos(omega)
-                add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity + np.sin(omega)
+                # omega = ((v_rot / si.radius) * 2*np.pi)
+                add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity - r[1] * v_rot
+                add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity + r[0] * v_rot
             else:
                 add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity
                 add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity
