@@ -54,7 +54,7 @@ v_inf_wind_WC = 2100 | units.kms
 T_wind_WN = 0.3 * T_eff_WN
 T_wind_WC = 0.3 * T_eff_WC
 ecc_SG = 0  # guess
-inc_SG = 0 | units.deg  # guess
+inc_SG = 25 | units.deg  # guess
 
 
 def Initialize_inner_binary():
