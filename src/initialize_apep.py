@@ -47,14 +47,15 @@ M_SG = 40 | units.MSun
 R_SG = 35.4 | units.RSun
 T_eff_SG = 30000 | units.K
 M_loss_SG = 10 ** (-5) | units.MSun / units.yr
+ecc_SG = 0  # guess
+inc_SG = 25 | units.deg  # guess
 
 # Stellar winds
 v_inf_wind_WN = 3500 | units.kms
 v_inf_wind_WC = 2100 | units.kms
 T_wind_WN = 0.3 * T_eff_WN
 T_wind_WC = 0.3 * T_eff_WC
-ecc_SG = 0  # guess
-inc_SG = 25 | units.deg  # guess
+
 
 
 def Initialize_inner_binary():
