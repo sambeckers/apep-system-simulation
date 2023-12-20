@@ -15,7 +15,6 @@ from amuse.units import units
 import numpy as np
 
 def plot_sph_particles_2D(filename):
-    #particles = read_set_from_file(filename, "hdf5")
     particles = read_set_from_file(filename, "hdf5", copy_history = False, close_file = False) #reading the saved hdf5 files
     _plot.sph_particles_plot(particles) #plotting routine to plot the SPH particles
     plt.savefig(filename.replace('.hdf5', '.png'))
@@ -39,7 +38,6 @@ def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
             x, y = positions.x, positions.y
 
             pos = apep.position
-            name = apep.name
             x_a, y_a = pos.x, pos.y
 
             plt.figure(dpi=450)
@@ -49,17 +47,21 @@ def plot_apep(hdf5_files, min_size = 100, max_size = 10000):
             phys_to_pix2 = n_pixels[0]*n_pixels[1] / ((max(x)-min(x))**2 + (max(y)-min(y))**2)
             sizes = np.minimum(np.maximum((h_smooths**2 * phys_to_pix2), min_size), max_size)
             
-            plt.scatter(x.value_in(units.AU), y.value_in(units.AU), s=100, c='orange', alpha=0.1)
-            for x_i, y_i, col, lab in zip(x_a, y_a, ['blue', 'cyan', 'red']), name):
-                plt.scatter(x_i.value_in(units.AU), y_i.value_in(units.AU), s=100, c='blue', marker='*', label=name)
+            plt.scatter(x.value_in(units.AU), y.value_in(units.AU), s=10, c='orange', alpha=0.05)
+            for x_i, y_i, color in zip(x_a, y_a, ['blue', 'cyan', 'red']):
+                plt.scatter(x_i.value_in(units.AU), y_i.value_in(units.AU), s=100, c=color, marker='*')
             plt.xlabel('x [AU]')
             plt.ylabel('y [AU]')
             plt.text(0.1, 0.94, f't = {i} days',
             horizontalalignment='center',
             verticalalignment='center',
             transform = current_axes.transAxes, color='white', fontsize=12)
-            plt.legend(handles = [plt.scatter([],[],marker=".", color='orange', label='Stellar wind')], loc='upper right')
-            for i in plt.legend().get_texts():
+            for i in plt.legend(handles = [plt.scatter([],[],marker=".", color='orange', label='Stellar wind'), 
+                                           plt.scatter([],[],marker="*", color='blue', label='WC8'), 
+                                           plt.scatter([],[],marker="*", color='cyan', label='WN46b'), 
+                                           plt.scatter([],[],marker="*", color='red', label='O8')],
+                                loc='upper center', bbox_to_anchor=(0.5, 1.05),
+                                ncol=2, fancybox=True, shadow=True).get_texts():
                 i.set_color("white")
             plt.tight_layout()
             plt.savefig(filename.replace('.hdf5', '.png'))
