@@ -14,7 +14,7 @@
 
 ## Additional Objectives
 
-- **Supernova Simulation**: After meeting the minimum requirements, the next goal is to simulate the supernova of the WC8(carbon-burning) Wolf-Rayet star within the system.
+- **Supernova Simulation**: After meeting the minimum requirements, the next goal is to simulate the supernova of the Nitrogen burning Wolf-Rayet star within the system.
   
 - **Morphological Impact Analysis**: Post-supernova, the resultant changes in the system’s morphology.
 
