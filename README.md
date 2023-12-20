@@ -1,6 +1,11 @@
 
 # Apep System Simulation
+## Name of the Member:
 
+- Vincent van Rie
+- Divyansh Srivastava
+- Sam Beckers
+  
 ## Minimum Requirements
 
 - **Morphological Reproduction**: The primary objective is to accurately simulate the morphology of the Apep system. The code must be capable of reproducing the observed shape (serpent) and maybe the structure of the system as viewed from various angles. The code will use gravity, stellar evolution, hydrodynamics and radiative transfer codes from the AMUSE framework.
