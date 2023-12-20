@@ -184,6 +184,7 @@ def gravity_hydro_bridge():
             supernova_gas= inject_supernova_energy(supernova_gas, exploding_region=1 | units.RSun)
             if len(supernova_gas) > 0:
                 ism.add_particles(supernova_gas)
+                ism.synchronize_to(hydro.gas_particles)
                 moving_bodies.remove_particle(particle=moving_bodies[1]) #this also ensures WN star is removed from the binary once it goes supernova
                 stars.add_particle(particle=core)
 
