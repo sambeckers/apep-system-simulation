@@ -162,10 +162,8 @@ def gravity_hydro_bridge():
         if first_time:
             mass_sph = 0.1 * binary_mass_loss_rate
 
-        if once_supernova:
-            new_sph = new_sph_particles_from_stellar_wind(binary, mass_sph) #this line needs improvement as one of the stars of the binary is gone now and a non wind emitting core is there
-        #else:
-         #   new_sph = new_sph_particles_from_stellar_wind(binary[0], mass_sph)
+        new_sph = new_sph_particles_from_stellar_wind(binary, mass_sph) #after supernova one of the stars of the binary would be gone now so wind particles are only from WC star
+        
         if first_time:
             mass_sph = mgas
             first_time = False
@@ -186,7 +184,7 @@ def gravity_hydro_bridge():
             supernova_gas= inject_supernova_energy(supernova_gas, exploding_region=1 | units.RSun)
             if len(supernova_gas) > 0:
                 ism.add_particles(supernova_gas)
-                moving_bodies.remove_particle(particle=moving_bodies[1])
+                moving_bodies.remove_particle(particle=moving_bodies[1]) #this also ensures WN star is removed from the binary once it goes supernova
                 stars.add_particle(particle=core)
 
         print("Total number of particles", len(ism))
