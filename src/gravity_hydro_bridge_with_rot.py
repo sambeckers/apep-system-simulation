@@ -7,7 +7,7 @@ Created on 02-12-23
 {Outline of code}
 """
 from __future__ import print_function
-import numpy
+import numpy as np
 import os
 from amuse.lab import *
 from amuse.couple import bridge
@@ -15,13 +15,11 @@ from amuse import datamodel
 from amuse.community.bhtree.interface import Bhtree
 from amuse.community.ph4.interface import ph4
 from amuse.community.fi.interface import Fi
-from amuse.community.seba.interface import SeBa
 from amuse.ext.evrard_test import uniform_unit_sphere
-from initialize_apep import Initialize_inner_binary, Initialize_apep
+from initialize_apep import Initialize_inner_binary, Initialize_apep, P_binary
 from amuse.units.constants import G
-from amuse.io import write_set_to_file, read_set_from_file
+from amuse.io import write_set_to_file
 from amuse.community.gadget2.interface import Gadget2
-from amuse.ext.star_to_sph import convert_stellar_model_to_SPH
 
 
 def new_sph_particles_from_stellar_wind(stars, mgas):
@@ -37,13 +35,6 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
         add.mass = mgas
         add.h_smooth = 0.0 | units.parsec
 
-        if si.name == "WC8":
-            vrot = 530 | units.kms
-        elif si.name == "WN46b":
-            vrot = 0.0 | units.kms
-        else:
-            raise ValueError("No star found")
-
         dx, dy, dz = uniform_unit_sphere(Ngas).make_xyz()
         add.x = si.x + (dx * si.radius)
         add.y = si.y + (dy * si.radius)
@@ -53,29 +44,18 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
             r = r / r.length()
             v_wind = (G * si.mass / (add[ri].position - si.position).length()).sqrt()
             add[ri].u = 0.5 * (v_wind) ** 2
-            add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity + r[1] * vrot
-            add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity + r[0] * vrot
-            add[ri].vz = si.vz + r[2] * si.terminal_wind_velocity
+            if si.name == "WC8":
+                v_rot = 500 | units.kms
+                # omega = ((v_rot / si.radius) * 2*np.pi)
+                add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity - r[1] * v_rot
+                add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity + r[0] * v_rot
+            else:
+                add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity
+                add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity
+                add[ri].vz = si.vz + r[2] * si.terminal_wind_velocity
             # print(add[ri].velocity.length().in_(units.kms))
         new_sph.add_particles(add)
     return new_sph
-
-
-def inject_supernova_energy(
-    gas_particles, explosion_energy=1.0e51 | units.erg, exploding_region=10 | units.RSun
-):
-    inner = gas_particles.select(
-        lambda pos: pos.length_squared() < exploding_region**2, ["position"]
-    )
-    print(len(inner), "innermost particles selected.")
-    print(
-        "Adding",
-        explosion_energy / inner.total_mass(),
-        "of supernova " "(specific internal) energy to each of the n=",
-        len(inner),
-        "SPH particles.",
-    )
-    inner.u += explosion_energy / inner.total_mass()
 
 
 def gravity_hydro_bridge():
@@ -85,10 +65,10 @@ def gravity_hydro_bridge():
     a = stars.position.length().amax()
 
     dt = (
-        0.01 | units.yr
+        0.1 | units.yr
     )  # changed from 1 yr because the SPH particles were shooting away in that time
     binary_mass_loss_rate = abs(binary.dmdt.sum() * dt)
-    mgas = 0.05 * binary_mass_loss_rate
+    mgas = 0.01 * binary_mass_loss_rate
 
     stars.h_smooth = 0.0 * a
     stars.u = 0 | units.kms**2
@@ -114,7 +94,7 @@ def gravity_hydro_bridge():
     ism.h_smooth = 0.01 * a
     # hydro = Gadget2(converter)
     hydro = Fi(converter, redirection="none")
-    hydro.parameters.timestep = dt / 8.0  # smaller_dt for hydro is better
+    # hydro.parameters.timestep = dt / 8.0  # smaller_dt for hydro is better
     hydro.parameters.use_hydro_flag = True
     hydro.parameters.radiation_flag = False
     hydro.parameters.self_gravity_flag = True
@@ -123,11 +103,11 @@ def gravity_hydro_bridge():
     hydro.parameters.isothermal_flag = True
     hydro.parameters.epsilon_squared = (10 | units.RSun) ** 2
 
-    hydro.parameters.timestep = 1 | units.s  # Steven's patch
-    print(hydro.model_time)
-    hydro.evolve_model(hydro.model_time)
-    hydro.parameters.timestep = dt
-    hydro.evolve_model(0 | units.yr)
+    # hydro.parameters.timestep = 1 | units.s  # Steven's patch
+    # print(hydro.model_time)
+    # hydro.evolve_model(hydro.model_time)
+    # hydro.parameters.timestep = dt
+    # hydro.evolve_model(0 | units.yr)
     if len(ism) > 0:
         hydro.gas_particles.add_particles(ism)
     # hydro.parameters.periodic_box_size = 10000 * a
@@ -142,43 +122,22 @@ def gravity_hydro_bridge():
 
     moving_bodies = ParticlesSuperset([stars, ism])
     model_time = 0 | units.yr
-    filename = "snewstellargravhydroSUPERNOVA.hdf5"
+    filename = "snewstellargravhydro.hdf5"
     if len(ism) > 0:
         write_set_to_file(moving_bodies, filename, "hdf5")
 
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
     gravhydro.add_system(hydro, (gravity,), False)
-    gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
+    gravhydro.timestep = 0.2*P_binary
 
     istep = 0
     save_every = 1
     first_time = True
-    not_exploded = True
 
-    while model_time < 100 | units.yr:
-        if model_time > 0.2 | units.yr and not_exploded:
-            not_exploded = False
-            
-            model = convert_stellar_model_to_SPH(
-                stars[2],
-                100,
-                seed=12345,
-                with_core_particle=True,
-                target_core_mass=1.4 | units.MSun,
-            )
-            core, gas_without_core, core_radius = (
-                model.core_particle,
-                model.gas_particles,
-                model.core_radius,
-            )
-
-            inject_supernova_energy(gas_without_core, exploding_region=1 | units.RSun)
-
-            hydro.gas_particles.add_particles(gas_without_core)
-            hydro.dm_particles.add_particle(core)
-
-        model_time += gravhydro.timestep
+    while model_time < 5 | units.yr:
+        dt = dt * 1.01
+        model_time += dt
         binary.Mwind += binary.dmdt * dt
         print("Wind mass loss: ", binary.Mwind)
 
@@ -207,7 +166,7 @@ def gravity_hydro_bridge():
         print(ism[3].velocity.length().in_(units.kms))
 
         if istep % 1 / save_every == 0:
-            filename = f"snewstellargravhydroSUPERNOVA_{int(istep/save_every)}.hdf5"
+            filename = f"snewstellargravhydro_{int(istep/save_every)}.hdf5"
             if os.path.exists(filename):
                 os.remove(filename)
             write_set_to_file(moving_bodies, filename, "hdf5")
