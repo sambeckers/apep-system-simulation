@@ -1,6 +1,6 @@
 
 # Apep System Simulation
-## Name of the Member:
+## Name of the Members:
 
 - Vincent van Rie
 - Divyansh Srivastava
