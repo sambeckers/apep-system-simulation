@@ -197,7 +197,7 @@ def gravity_hydro_bridge():
             before_supernova = False
             supernova_model = convert_stellar_model_to_SPH(
                 None,  # assuming WN goes supernova
-                1000,  # these sph particles will make the supernova
+                1000,  # these sph particles will make the supernova and the core
                 seed=12345,
                 pickle_file=pickle_file,
                 with_core_particle=True,
