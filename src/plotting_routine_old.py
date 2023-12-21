@@ -1,10 +1,10 @@
 """
-plotting_routine
+plotting_routine_old
 Created on 02-12-23
 
 @author(s): Sam Beckers, Divyansh Srivastava, Vincent van Rie 
 
-{Outline of code}
+Old plotting routine used before the new plotting routine was upgraded and finished.
 """
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
@@ -18,7 +18,6 @@ import numpy as np
 import re
 
 frame_size = 5000
-
 
 def plot_sph_particles_2D(filename):
     # particles = read_set_from_file(filename, "hdf5")
@@ -40,7 +39,6 @@ def plot_sph_particles_2D(filename):
         view=[xmin, xmax, ymin, ymax],
     )  # plotting routine to plot the SPH particles
     plt.savefig(filename.replace(".hdf5", ".png"))
-
 
 def smart_length_units_for_vector_quantity(quantity):
     length_units = [units.Mpc, units.kpc, units.parsec, units.AU, units.RSun, units.km]
