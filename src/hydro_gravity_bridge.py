@@ -7,7 +7,7 @@ Created on 02-12-23
 First attempt at creating stellar wind from SPH particles, 
 including a Bridge between the hydro and gravity codes.
 See also: src/hydro_gravity_bridge_v2.py, src/gravity_hydro_bridge_with_rot.py
-and src/gravity_hydro_bridge_with_supernova.py (for updated version with rotation/supernova and other upgrades)
+and src/gravity_hydro_bridge_with_supernova.py (for updated versions with rotation/supernova and other upgrades)
 """
 import numpy
 from amuse.lab import *

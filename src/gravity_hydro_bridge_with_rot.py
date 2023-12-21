@@ -103,6 +103,7 @@ def gravity_hydro_bridge():
     # Setting up the hydrodynamics
     hydro = Fi(converter, redirection="none")
     hydro.parameters.use_hydro_flag = True
+    hydro.hydro.parameters.timestep = dt / 8.0
     hydro.parameters.radiation_flag = False
     hydro.parameters.self_gravity_flag = True
     hydro.parameters.integrate_entropy_flag = False
