@@ -4,7 +4,11 @@ Created on 02-12-23
 
 @author(s): Sam Beckers, Divyansh Srivastava, Vincent van Rie 
 
-{Outline of code}
+- Creates stellar wind from SPH particles based on WR binary properties
+- Includes a Bridge between the hydro and gravity codes.
+- Includes rotation of the WC8 star
+- Includes supernova event for WN star
+- Evolves the model and saves selected timesteps to a hdf5 file
 """
 # Importing modules
 from __future__ import print_function
