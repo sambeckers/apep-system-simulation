@@ -115,7 +115,7 @@ def gravity_hydro_bridge():
     hydro.parameters.timestep = 1 | units.s
     print(hydro.model_time)
     hydro.evolve_model(hydro.model_time)
-    hydro.parameters.timestep = dt
+    hydro.parameters.timestep = dt/8.
     hydro.evolve_model(0 | units.yr)
     if len(wind) > 0:
         hydro.gas_particles.add_particles(wind)
@@ -135,7 +135,7 @@ def gravity_hydro_bridge():
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
     gravhydro.add_system(hydro, (gravity,), True)
-    gravhydro.timestep = 0.2*P_binary
+    gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
 
     # Evolving the system
     istep = 0
@@ -157,7 +157,7 @@ def gravity_hydro_bridge():
             mass_sph = mgas
             first_time = False
 
-        print("Total numver of particles", len(wind))
+        print("Total number of particles", len(wind))
         if len(new_sph) > 0:
             wind.add_particles(new_sph)
             wind.synchronize_to(hydro.gas_particles)
