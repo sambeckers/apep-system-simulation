@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov  8 15:04:09 2023
+remove_files
+Created on 08-12-23
 
-@author: Sam Becker, Vincent van Rie, Divyansh Srivastava 
+@author: Sam Beckers, Vincent van Rie, Divyansh Srivastava
+
+Short script to remove all the files created by the simulation.
 """
-
 import os
 
 for istep in range(0, 1000, 1):

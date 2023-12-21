@@ -4,7 +4,9 @@ Created on 02-12-23
 
 @author(s): Sam Beckers, Divyansh Srivastava, Vincent van Rie 
 
-{Outline of code}
+First attempt at creating stellar wind from SPH particles.
+See also: src/gravity_hydro_bridge.py, src/gravity_hydro_bridge_with_rot 
+and src/gravity_hydro_bridge_with_supernova (for updated version with Bridge and other upgrades)
 """
 import numpy
 from amuse.lab import *
@@ -22,7 +24,6 @@ from amuse.community.ph4.interface import ph4
 # Own modules
 from initialize_apep import Initialize_inner_binary
 from initialize_apep import M_loss_WN, M_loss_WC, v_inf_wind_WN, v_inf_wind_WC
-from plotting_routine import plot_sph_particles
 
 
 set_printing_strategy(
@@ -122,10 +123,8 @@ def main():
                 write_set_to_file(
                     hydro.gas_particles, filename, "hdf5", append_to_file=False
                 )
-                plot_sph_particles(filename)
                 if os.path.exists(filename):
                     os.remove(filename)
-
             istep += 1
     hydro.stop()
 

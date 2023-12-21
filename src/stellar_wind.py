@@ -1,3 +1,13 @@
+"""
+stellar_wind
+Created on 08-12-23
+
+@author(s): Sam Beckers, Divyansh Srivastava, Vincent van Rie 
+
+An attempt at working with the AMUSE stellar wind module. Failed.
+"""
+
+
 from amuse.ext.stellar_wind import new_stellar_wind
 from amuse.units import units, nbody_system
 from amuse.lab import Particles, ParticlesSuperset
