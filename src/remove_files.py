@@ -10,10 +10,18 @@ Short script to remove all the files created by the simulation.
 """
 import os
 
-for istep in range(0, 1000, 1):
-    filename = f"snewstellargravhydroTEST_{istep}.hdf5"
-    pngfilename = f"snewstellargravhydroTEST_{istep}.png"
-    if os.path.exists(filename):
-            os.remove(filename)
-    if os.path.exists(pngfilename):
-        os.remove(pngfilename)
+
+def Remove_files(filename):
+    for istep in range(0, 1000, 1):
+        hdf5filename = f"{filename}{istep}.hdf5"
+        pngfilename = f"{filename}{istep}.png"
+        if os.path.exists(hdf5filename):
+            os.remove(hdf5filename)
+        if os.path.exists(pngfilename):
+            os.remove(pngfilename)
+
+
+if __name__ == "__main__":
+    # Remove_files("apep_rot_")
+    # Remove_files("stellargravhydro_supernova_")
+    print("Files removed")

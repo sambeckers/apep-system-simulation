@@ -20,6 +20,7 @@ from amuse.io import write_set_to_file
 from initialize_apep import Initialize_apep, d_WR_binary_to_SG # own module
 from amuse.ext.star_to_sph import convert_stellar_model_to_SPH
 
+
 def new_sph_particles_from_stellar_wind(stars, mgas):
     """ 
     Creates new SPH particles that represent the stellar wind of the stars in the binary system.
@@ -81,11 +82,16 @@ def inject_supernova_energy(gas_particles,
         inner : innermost particles with supernova energy injected
     """
     inner = gas_particles.select(
-        lambda pos: pos.length_squared() < exploding_region**2,
-        ["position"])
+        lambda pos: pos.length_squared() < exploding_region**2, ["position"]
+    )
     print(len(inner), "innermost particles selected.")
-    print("Adding", explosion_energy / inner.total_mass(), "of supernova " \
-        "(specific internal) energy to each of the n=", len(inner), "SPH particles.")
+    print(
+        "Adding",
+        explosion_energy / inner.total_mass(),
+        "of supernova " "(specific internal) energy to each of the n=",
+        len(inner),
+        "SPH particles.",
+    )
     inner.u += explosion_energy / inner.total_mass()
 
     return inner
@@ -94,7 +100,7 @@ def inject_supernova_energy(gas_particles,
 def gravity_hydro_bridge():
     stars = Initialize_apep()
     binary = stars[0:2]
-    #print(binary)
+    # print(binary)
     a = stars.position.length().amax()
 
     dt = (
@@ -154,7 +160,7 @@ def gravity_hydro_bridge():
     # channel_from_to_hydro = ism.new_channel_to(hydro.gas_particles)
 
     moving_bodies = ParticlesSuperset([stars, ism])
-    #print(moving_bodies[1])
+    # print(moving_bodies[1])
     model_time = 0 | units.yr
     filename = "snewstellargravhydroTEST.hdf5"
     if len(ism) > 0:
@@ -168,9 +174,9 @@ def gravity_hydro_bridge():
     istep = 0
     save_every = 1
     first_time = True
-    once_supernova = True
-    time_for_supernova = .8 | units.yr
-    pickle_file = './WN_structure.pkl'
+    before_supernova = True
+    time_for_supernova = 0.8 | units.yr
+    pickle_file = "./src/WN_structure.pkl"
 
     while model_time < 150 | units.yr:
         model_time += gravhydro.timestep
@@ -181,30 +187,50 @@ def gravity_hydro_bridge():
         if first_time:
             mass_sph = 0.1 * binary_mass_loss_rate
 
-        new_sph = new_sph_particles_from_stellar_wind(binary, mass_sph) #after supernova one of the stars of the binary would be gone now so wind particles are only from WC star
-        
+        if before_supernova:
+            new_sph = new_sph_particles_from_stellar_wind(
+                binary, mass_sph
+            )  # after supernova one of the stars of the binary would be gone now so wind particles are only from WC star
+        elif not before_supernova:
+            new_sph = new_sph_particles_from_stellar_wind(
+                [binary[0]], mass_sph
+            )  # after supernova one of the stars of the binary would be gone now so wind particles are only from WC star
+        else:
+            raise ValueError("No stars available to create new sph")
+
         if first_time:
             mass_sph = mgas
             first_time = False
 
-        if model_time>=time_for_supernova and once_supernova:
-            once_supernova = False
-            supernova_model = convert_stellar_model_to_SPH(None, #assuming WN goes supernova
-        1000, #these sph particles will make the supernova
-        seed=12345,pickle_file=pickle_file,
-        with_core_particle=True,
-        target_core_mass = 1.2|units.MSun # WN was 11 solar mass so 1.2 solar mass core should be a good guess
-    )
-            core, supernova_gas, core_radius = supernova_model.core_particle, supernova_model.gas_particles, supernova_model.core_radius
-            print('*'*100)
+        if model_time >= time_for_supernova and before_supernova:
+            before_supernova = False
+            supernova_model = convert_stellar_model_to_SPH(
+                None,  # assuming WN goes supernova
+                1000,  # these sph particles will make the supernova
+                seed=12345,
+                pickle_file=pickle_file,
+                with_core_particle=True,
+                target_core_mass=1.2
+                | units.MSun,  # WN was 11 solar mass so 1.2 solar mass core should be a good guess
+            )
+            core, supernova_gas, core_radius = (
+                supernova_model.core_particle,
+                supernova_model.gas_particles,
+                supernova_model.core_radius,
+            )
+            print("*" * 100)
             print("SUPERNOVA")
-            print('*' * 100)
-            print('Core Radius',core_radius)
-            supernova_gas= inject_supernova_energy(supernova_gas, exploding_region=1 | units.RSun)
+            print("*" * 100)
+            print("Core Radius", core_radius)
+            supernova_gas = inject_supernova_energy(
+                supernova_gas, exploding_region=1 | units.RSun
+            )
             if len(supernova_gas) > 0:
                 ism.add_particles(supernova_gas)
                 ism.synchronize_to(hydro.gas_particles)
-                moving_bodies.remove_particle(particle=moving_bodies[1]) #this also ensures WN star is removed from the binary once it goes supernova
+                moving_bodies.remove_particle(
+                    particle=moving_bodies[1]
+                )  # this also ensures WN star is removed from the binary once it goes supernova
                 stars.add_particle(particle=core)
 
         print("Total number of particles", len(ism))
@@ -216,7 +242,9 @@ def gravity_hydro_bridge():
         channel["to_apep"].copy()  # channel_from_gravity.copy()
         channel["to_wind"].copy()  # channel_from_hydro.copy()
         channel["to_stars"].copy()
-        channel["to_wind"].copy_attributes(["u"])  # channel_from_hydro.copy_attributes(["u"])
+        channel["to_wind"].copy_attributes(
+            ["u"]
+        )  # channel_from_hydro.copy_attributes(["u"])
         print(ism[3].velocity.length().in_(units.kms))
 
         if istep % 1 / save_every == 0:
