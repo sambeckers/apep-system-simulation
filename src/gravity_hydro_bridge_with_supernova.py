@@ -6,23 +6,31 @@ Created on 02-12-23
 
 {Outline of code}
 """
+# Importing modules
 from __future__ import print_function
-import numpy
 import os
 from amuse.lab import *
 from amuse.couple import bridge
 from amuse import datamodel
-from amuse.community.bhtree.interface import Bhtree
 from amuse.community.ph4.interface import ph4
 from amuse.community.fi.interface import Fi
 from amuse.ext.evrard_test import uniform_unit_sphere
-from initialize_apep import Initialize_inner_binary, Initialize_apep
 from amuse.units.constants import G
-from amuse.io import write_set_to_file, read_set_from_file
-from amuse.community.gadget2.interface import Gadget2
+from amuse.io import write_set_to_file
+from initialize_apep import Initialize_apep, d_WR_binary_to_SG # own module
 from amuse.ext.star_to_sph import convert_stellar_model_to_SPH
 
 def new_sph_particles_from_stellar_wind(stars, mgas):
+    """ 
+    Creates new SPH particles that represent the stellar wind of the stars in the binary system.
+    Adapted from AMUSE example codes and textbook.
+    Args:
+        stars (Particles): the WR binary
+        mgas (Particles): mass of the gas lost through stellar wind in the WR binary
+
+    Returns:
+        new_sph (Particles): the new SPH particles representing the stellar wind
+    """
     new_sph = datamodel.Particles(0)
     for si in stars:
         Ngas = int(si.Mwind / mgas)
@@ -35,8 +43,9 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
         add.mass = mgas
         add.h_smooth = 0.0 | units.parsec
 
+        # Adding rotational velocity to WC8 star only
         if si.name == "WC8":
-            vrot = 530 | units.kms
+            vrot = 500 | units.kms
         elif si.name == "WN46b":
             vrot = 0.0 | units.kms
         else:
@@ -54,7 +63,6 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
             add[ri].vx = si.vx + r[0] * si.terminal_wind_velocity + r[1] * vrot
             add[ri].vy = si.vy + r[1] * si.terminal_wind_velocity + r[0] * vrot
             add[ri].vz = si.vz + r[2] * si.terminal_wind_velocity
-            # print(add[ri].velocity.length().in_(units.kms))
         new_sph.add_particles(add)
     return new_sph
 
@@ -62,6 +70,16 @@ def new_sph_particles_from_stellar_wind(stars, mgas):
 def inject_supernova_energy(gas_particles,
                             explosion_energy=1.0e+51|units.erg,
                             exploding_region=10|units.RSun):
+    """Injects supernova energy into the gas particles.
+
+    Args:
+        gas_particles : a set of supernova gas particles
+        explosion_energy (optional): energy injected into gas. Defaults to 1.0e+51 | units.erg.
+        exploding_region (optional): supernova region. Defaults to 10 | units.RSun.
+
+    Returns:
+        inner : innermost particles with supernova energy injected
+    """
     inner = gas_particles.select(
         lambda pos: pos.length_squared() < exploding_region**2,
         ["position"])
@@ -69,6 +87,7 @@ def inject_supernova_energy(gas_particles,
     print("Adding", explosion_energy / inner.total_mass(), "of supernova " \
         "(specific internal) energy to each of the n=", len(inner), "SPH particles.")
     inner.u += explosion_energy / inner.total_mass()
+
     return inner
 
 
