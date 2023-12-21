@@ -20,7 +20,7 @@ from amuse.community.fi.interface import Fi
 from amuse.ext.evrard_test import uniform_unit_sphere
 from amuse.units.constants import G
 from amuse.io import write_set_to_file
-from initialize_apep import Initialize_apep, d_WR_binary_to_SG # own module
+from initialize_apep import Initialize_apep, d_WR_binary_to_SG, P_binary # own module
 
 
 def new_sph_particles_from_stellar_wind(stars, mgas):
@@ -134,8 +134,8 @@ def gravity_hydro_bridge():
     # Setting up the bridge between gravity and hydrodynamics
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
-    gravhydro.add_system(hydro, (gravity,), True) # or False? See if it doesn't break
-    gravhydro.timestep = min(dt, 20 * hydro.parameters.timestep) # Changed from 2 to 20, see if it doesn't break
+    gravhydro.add_system(hydro, (gravity,), True)
+    gravhydro.timestep = 0.2*P_binary
 
     # Evolving the system
     istep = 0
