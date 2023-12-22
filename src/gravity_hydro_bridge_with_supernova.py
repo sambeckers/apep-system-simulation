@@ -139,7 +139,7 @@ def gravity_hydro_bridge():
     hydro.parameters.timestep = 1 | units.s
     print(hydro.model_time)
     hydro.evolve_model(hydro.model_time)
-    hydro.parameters.timestep = dt
+    hydro.parameters.timestep = dt/8.
     hydro.evolve_model(0 | units.yr)
     if len(wind) > 0:
         hydro.gas_particles.add_particles(wind)
@@ -159,7 +159,7 @@ def gravity_hydro_bridge():
     gravhydro = bridge.Bridge(use_threading=False)
     gravhydro.add_system(gravity, (hydro,))
     gravhydro.add_system(hydro, (gravity,), True)
-    gravhydro.timestep = min(dt, 20 * hydro.parameters.timestep)
+    gravhydro.timestep = min(dt, 2 * hydro.parameters.timestep)
 
     # Evolving the system 
     istep = 0
@@ -197,7 +197,7 @@ def gravity_hydro_bridge():
             before_supernova = False
             supernova_model = convert_stellar_model_to_SPH(
                 None,  # assuming WN goes supernova
-                1000,  # these sph particles will make the supernova
+                1000,  # these sph particles will make the supernova and the core
                 seed=12345,
                 pickle_file=pickle_file,
                 with_core_particle=True,
