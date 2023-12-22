@@ -178,16 +178,8 @@ def gravity_hydro_bridge():
         if first_time:
             mass_sph = 0.1 * central_engine_mass_loss_rate
 
-        if before_supernova:
-            new_sph = new_sph_particles_from_stellar_wind(
-                central_engine, mass_sph
-            )  # after supernova one of the stars of the central engine would be gone now so wind particles are only from WC star
-        elif not before_supernova:
-            new_sph = new_sph_particles_from_stellar_wind(
-                [central_engine[0]], mass_sph
-            )  # after supernova one of the stars of the central engine would be gone now so wind particles are only from WC star
-        else:
-            raise ValueError("No stars available to create new sph")
+        new_sph = new_sph_particles_from_stellar_wind(
+                central_engine, mass_sph)  # after supernova one of the stars of the central engine would be gone, so wind particles are only from WC star
 
         if first_time:
             mass_sph = mgas
