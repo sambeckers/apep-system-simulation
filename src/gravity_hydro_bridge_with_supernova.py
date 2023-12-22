@@ -100,7 +100,7 @@ def gravity_hydro_bridge():
     apep = Initialize_apep()
     central_engine = apep[0:2]
 
-    dt = 0.1 | units.yr
+    dt = 0.01 | units.yr
     central_engine_mass_loss_rate = abs(central_engine.dmdt.sum() * dt)
     mgas = 0.01 * central_engine_mass_loss_rate
 
