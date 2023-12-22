@@ -11,7 +11,9 @@ from Callingham et al. 2019, 2020; Han et al. 2020; del Palacio et al. 2022.
 # Importing modules
 from amuse.units import units, constants
 from amuse.lab import Particles
-from amuse.community.seba.interface import SeBa
+import os
+from amuse.ext.star_to_sph import pickle_stellar_model
+from amuse.community.mesa_r2208.interface import MESA
 from amuse.ext.orbital_elements import new_binary_from_orbital_elements
 
 # Wolf Rayet (WR) binary
@@ -83,6 +85,17 @@ def Initialize_inner_binary():
     inner_binary[inner_binary.name == "WC8"].dmdt = M_loss_WC
     inner_binary[inner_binary.name == "WN46b"].dmdt = M_loss_WN
     inner_binary.Mwind = 0 | units.MSun
+
+    # Using MESA to evolve WN46b star for 1 million year and saving the pickle file
+    out_pickle_file = os.path.join(os.getcwd(),"WN_structure.pkl")
+    stellar = MESA(redirection="none")
+    stellar.particles.add_particles(inner_binary[inner_binary.name == "WN46b"])
+    stellar_to_framework = stellar.particles.new_channel_to(inner_binary)
+    stellar.evolve_model(1 | units.Myr)
+    stellar_to_framework.copy_attributes(["mass", "radius", "temperature"])
+    pickle_stellar_model(stellar.particles[0], out_pickle_file)
+    stellar.stop()
+    # the above 8 lines can be commented out after the first run once the pickle file is saved to save time. We have also provided the pickle file we generated in the src directory
 
     return inner_binary
 
