@@ -111,4 +111,42 @@ def Initialize_apep():
     ternary_system = inner_binary
     setattr(ternary_system, "name", ["WC8", "WN46b", "O8"])
 
+    ternary_system[ternary_system.name == "O8"].radius = R_SG
+    ternary_system[ternary_system.name == "O8"].temperature = T_eff_SG
+    ternary_system[ternary_system.name == "O8"].dmdt = M_loss_SG
+
     return ternary_system
+
+
+# Plot initial system in 3D (for testing purposes)
+def plot_initial_apep():
+    bodies = Initialize_apep()
+    x = bodies.x.value_in(units.AU)
+    y = bodies.y.value_in(units.AU)
+    z = bodies.z.value_in(units.AU)
+
+    import matplotlib.pyplot as plt
+    from mpl_toolkits import mplot3d
+
+    with plt.rc_context({'axes.edgecolor': 'white',
+                            'xtick.color': 'white',
+                            'ytick.color': 'white',
+                            'figure.facecolor': 'black',
+                            'axes.facecolor': 'black',
+                            'axes.labelcolor': 'white',
+                            'axes.titlecolor': 'white'}):
+        fig = plt.figure(dpi=450)
+        ax = plt.axes(projection='3d')
+        ax.dist = 13
+        ax.scatter3D(x, y, z, s=100, c=['blue', 'cyan', 'red'], marker='*')
+        ax.set_xlabel('x [AU]')
+        ax.set_ylabel('y [AU]')
+        ax.set_zlabel('z [AU]')
+        for i in plt.legend(handles=[ax.scatter3D([], [], [],marker="*", color='blue', label='WC8'),
+                                ax.scatter3D([], [], [], marker="*", color='cyan', label='WN46b'),
+                                ax.scatter3D([], [], [], marker="*", color='red', label='O8')],
+                        loc='upper center', bbox_to_anchor=(0.5, 1),
+                        ncol=2, fancybox=True, shadow=True).get_texts():
+            i.set_color("white")
+        plt.show()
+# plot_initial_apep()
