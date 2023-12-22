@@ -88,6 +88,8 @@ def Initialize_inner_binary():
 
     # Using MESA to evolve WN46b star for 1 million year and saving the pickle file
     out_pickle_file = os.path.join(os.getcwd(),"WN_structure.pkl")
+    if os.path.exists(out_pickle_file):
+                os.remove(out_pickle_file)
     stellar = MESA(redirection="none")
     stellar.particles.add_particles(inner_binary[inner_binary.name == "WN46b"])
     stellar_to_framework = stellar.particles.new_channel_to(inner_binary)
@@ -95,7 +97,7 @@ def Initialize_inner_binary():
     stellar_to_framework.copy_attributes(["mass", "radius", "temperature"])
     pickle_stellar_model(stellar.particles[0], out_pickle_file)
     stellar.stop()
-    # the above 8 lines can be commented out after the first run once the pickle file is saved to save time. We have also provided the pickle file we generated in the src directory
+    # the above 10 lines can be commented out after the first run once the pickle file is saved to save time. We have also provided the pickle file we generated in the src directory
 
     return inner_binary
 
